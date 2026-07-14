@@ -91,12 +91,53 @@ def load_all_datasets():
     return datasets
 
 
+from src.etl.validator import (
+    dq01_primary_key,
+    dq02_company_year,
+    dq03_foreign_key,
+    dq04_balance_sheet,
+    dq05_opm,
+    dq06_sales,
+    dq07_cashflow,
+    dq08_tax,
+    dq09_dividend,
+    dq10_eps,
+    dq11_document,
+    dq12_market_cap,
+    dq13_debt,
+    dq14_missing,
+    dq15_empty,
+    dq16_stock_date,
+    save_validation_report,
+)
 if __name__ == "__main__":
 
-    all_data = load_all_datasets()
+    all_data = load_all_datasets()      # <-- FIRST
+
+    companies_df = all_data["companies"]  # <-- SECOND
+
+    for name, df in all_data.items():
+
+        dq01_primary_key(df, name)
+        dq02_company_year(df, name)
+        dq03_foreign_key(df, companies_df, name)
+        dq04_balance_sheet(df)
+        dq05_opm(df)
+        dq06_sales(df)
+        dq07_cashflow(df)
+        dq08_tax(df)
+        dq09_dividend(df)
+        dq10_eps(df)
+        dq11_document(df)
+        dq12_market_cap(df)
+        dq13_debt(df)
+        dq14_missing(df, name)
+        dq15_empty(df, name)
+        dq16_stock_date(df)
+
+    save_validation_report()
 
     print("\n========== DATA SUMMARY ==========")
 
     for name, df in all_data.items():
-
         print(f"{name:<20} {len(df)} rows")

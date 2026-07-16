@@ -1,0 +1,3 @@
+from analytics.edge_cases import generate_edge_case_log
+
+generate_edge_case_log()

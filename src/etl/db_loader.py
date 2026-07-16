@@ -7,8 +7,8 @@ Professional SQLite Loader
 import sqlite3
 from pathlib import Path
 
-from src.etl.loader import load_all_datasets
-from src.etl.audit import AuditLogger
+from etl.loader import load_all_datasets
+from etl.audit import AuditLogger
 
 DATABASE = Path("db/nifty100.db")
 

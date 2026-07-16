@@ -10,7 +10,7 @@ for SQLite.
 from pathlib import Path
 import pandas as pd
 
-from src.etl.normaliser import (
+from etl.normaliser import (
     normalize_ticker,
     normalize_year,
     clean_column_names,
@@ -91,7 +91,7 @@ def load_all_datasets():
     return datasets
 
 
-from src.etl.validator import (
+from etl.validator import (
     dq01_primary_key,
     dq02_company_year,
     dq03_foreign_key,

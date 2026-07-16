@@ -1,6 +1,6 @@
 import pytest
 
-from src.etl.normaliser import normalize_year, normalize_ticker
+from etl.normaliser import normalize_year, normalize_ticker
 
 
 # ----------------------------

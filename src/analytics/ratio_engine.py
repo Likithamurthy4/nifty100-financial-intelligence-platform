@@ -57,9 +57,17 @@ class RatioEngine:
             self.conn
         )
 
+        self.pnl = self.pnl.drop_duplicates(
+            subset=["company_id", "year"]
+        )
+
         self.bs = pd.read_sql(
             "SELECT * FROM balancesheet",
             self.conn
+        )
+
+        self.bs = self.bs.drop_duplicates(
+            subset=["company_id", "year"]
         )
 
         self.cf = pd.read_sql(
@@ -67,15 +75,23 @@ class RatioEngine:
             self.conn
         )
 
+        self.cf = self.cf.drop_duplicates(
+            subset=["company_id", "year"]
+        )
+
         self.market = pd.read_sql(
             "SELECT * FROM market_cap",
             self.conn
         )
 
+        self.market = self.market.drop_duplicates(
+            subset=["company_id", "year"]
+        )
+
         self.companies = pd.read_sql(
             "SELECT * FROM companies",
             self.conn
-        )
+    )
 
         self.sectors = pd.read_sql(
             "SELECT * FROM sectors",
@@ -83,8 +99,7 @@ class RatioEngine:
         )
 
         print("Tables Loaded Successfully")
-
-
+    
     ##################################################
 
     def merge_tables(self):
@@ -215,23 +230,38 @@ class RatioEngine:
 
             # ---------- CAGR ----------
 
-            revenue5, _ = revenue_cagr(
-                row["sales"],
-                row["sales"],
-                5
-            )
+            previous = self.data[
+                (self.data["company_id"] == row["company_id"]) &
+                (self.data["year"] == row["year"] - 5)
+            ]
 
-            pat5, _ = pat_cagr(
-                row["net_profit"],
-                row["net_profit"],
-                5
-            )
+            if not previous.empty:
 
-            eps5, _ = eps_cagr(
-                row["eps"],
-                row["eps"],
-                5
-            )
+                prev = previous.iloc[0]
+
+                revenue5, _ = revenue_cagr(
+                    prev["sales"],
+                    row["sales"],
+                    5
+                )
+
+                pat5, _ = pat_cagr(
+                    prev["net_profit"],
+                    row["net_profit"],
+                    5
+                )
+
+                eps5, _ = eps_cagr(
+                    prev["eps"],
+                    row["eps"],
+                    5
+                )
+
+            else:
+
+                revenue5 = None
+                pat5 = None
+                eps5 = None
 
             # ---------- Composite Quality ----------
 
@@ -337,12 +367,13 @@ class RatioEngine:
         total = cursor.fetchone()[0]
 
         print(f"Rows in financial_ratios : {total}")
+        EXPECTED_ROWS = 1044
 
-        if total >= 1100:
+        if total == EXPECTED_ROWS:
             print("PASS : Expected row count achieved")
         else:
-            print("WARNING : Row count below expected")
-
+            print(f"WARNING : Expected {EXPECTED_ROWS}, Found {total}")
+        
         cursor.execute("""
             SELECT COUNT(*)
             FROM financial_ratios

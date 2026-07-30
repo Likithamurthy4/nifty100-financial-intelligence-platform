@@ -30,10 +30,13 @@ class ScreenerLoader:
             fr.interest_coverage,
             fr.asset_turnover,
             fr.free_cash_flow_cr,
+            fr.revenue_cagr_3yr,
             fr.revenue_cagr_5yr,
             fr.pat_cagr_5yr,
             fr.eps_cagr_5yr,
+            fr.dividend_payout_ratio_pct,
             fr.composite_quality_score,
+            
 
             p.sales,
             p.net_profit,

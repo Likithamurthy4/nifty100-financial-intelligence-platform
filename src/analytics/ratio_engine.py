@@ -229,15 +229,24 @@ class RatioEngine:
             )
 
             # ---------- CAGR ----------
-
-            previous = self.data[
+            previous5 = self.data[
                 (self.data["company_id"] == row["company_id"]) &
                 (self.data["year"] == row["year"] - 5)
             ]
 
-            if not previous.empty:
+            previous3 = self.data[
+                (self.data["company_id"] == row["company_id"]) &
+                (self.data["year"] == row["year"] - 3)
+            ]
 
-                prev = previous.iloc[0]
+            revenue5 = None
+            pat5 = None
+            eps5 = None
+            revenue3 = None
+
+            if not previous5.empty:
+
+                prev = previous5.iloc[0]
 
                 revenue5, _ = revenue_cagr(
                     prev["sales"],
@@ -257,11 +266,15 @@ class RatioEngine:
                     5
                 )
 
-            else:
+            if not previous3.empty:
 
-                revenue5 = None
-                pat5 = None
-                eps5 = None
+                prev3 = previous3.iloc[0]
+
+                revenue3, _ = revenue_cagr(
+                    prev3["sales"],
+                    row["sales"],
+                    3
+                )
 
             # ---------- Composite Quality ----------
 
@@ -311,6 +324,8 @@ class RatioEngine:
 
                 "cash_from_operations_cr": row["operating_activity"],
 
+                "revenue_cagr_3yr": revenue3,
+                
                 "revenue_cagr_5yr": revenue5,
 
                 "pat_cagr_5yr": pat5,

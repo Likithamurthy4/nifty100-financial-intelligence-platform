@@ -15,6 +15,7 @@ class ScreenerEngine:
         loader = ScreenerLoader()
         self.df = loader.load_master_dataframe()
         loader.close()
+        print(self.df.columns.tolist())
 
     def apply_filters(self, preset):
 
@@ -31,6 +32,7 @@ class ScreenerEngine:
         column_map = {
             "roe_min": ("return_on_equity_pct", ">="),
             "free_cash_flow_min": ("free_cash_flow_cr", ">="),
+            "revenue_cagr_3yr_min": ("revenue_cagr_3yr", ">="),
             "revenue_cagr_5yr_min": ("revenue_cagr_5yr", ">="),
             "pat_cagr_5yr_min": ("pat_cagr_5yr", ">="),
             "sales_min": ("sales", ">="),
@@ -46,10 +48,12 @@ class ScreenerEngine:
 
         for rule, value in rules.items():
 
-            if rule == "debt_to_equity_max":
-                continue
-
-            if rule == "debt_declining":
+            if rule in [
+                "debt_to_equity_max",
+                "debt_to_equity_exact",
+                "debt_declining",
+                "icr_min"
+            ]:
                 continue
 
             if rule not in column_map:
@@ -59,13 +63,11 @@ class ScreenerEngine:
 
             if operator == ">=":
                 df = df[df[column] >= value]
-
-            elif operator == "<=":
+            else:
                 df = df[df[column] <= value]
 
         # -------------------------
-        # Debt-to-Equity Rule
-        # Skip Financial Sector
+        # Debt-to-Equity Max
         # -------------------------
 
         if "debt_to_equity_max" in rules:
@@ -88,8 +90,19 @@ class ScreenerEngine:
             ]
 
         # -------------------------
-        # ICR Rule
-        # Debt-Free treated as Infinity
+        # Debt-to-Equity Exact
+        # -------------------------
+
+        if "debt_to_equity_exact" in rules:
+
+            threshold = rules["debt_to_equity_exact"]
+
+            df = df[
+                df["debt_to_equity"].fillna(-999).round(2) == threshold
+            ]
+
+        # -------------------------
+        # Interest Coverage
         # -------------------------
 
         if "icr_min" in rules:
@@ -100,11 +113,17 @@ class ScreenerEngine:
                 (df["interest_coverage"].isna()) |
                 (df["interest_coverage"] >= threshold)
             ]
+
+        # -------------------------
+        # Latest Year Only
+        # -------------------------
+
         df = df.sort_values(
             by=["company_id", "year"]
         )
 
         df = df.groupby("company_id").tail(1)
+
         # -------------------------
         # Final Sort
         # -------------------------
@@ -115,3 +134,4 @@ class ScreenerEngine:
         )
 
         return df.reset_index(drop=True)
+    

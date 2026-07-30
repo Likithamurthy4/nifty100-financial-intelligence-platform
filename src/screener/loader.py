@@ -1,6 +1,6 @@
 import sqlite3
 import pandas as pd
-
+from screener.composite import CompositeScore
 
 DATABASE = "db/nifty100.db"
 
@@ -65,7 +65,13 @@ class ScreenerLoader:
         """
 
         df = pd.read_sql(query, self.conn)
-
+        # Calculate composite score
+        df = CompositeScore().calculate(df)
+        df["sector_composite_score"] = (
+        df.groupby("broad_sector")["composite_quality_score"]
+          .transform(lambda x: ((x - x.min()) /
+          (x.max() - x.min()) * 100).fillna(100))
+        )
         return df
 
     def close(self):

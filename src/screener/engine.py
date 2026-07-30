@@ -133,5 +133,7 @@ class ScreenerEngine:
             ascending=False
         )
 
-        return df.reset_index(drop=True)
-    
+        return df.sort_values(
+            by="composite_quality_score",
+            ascending=False
+        )

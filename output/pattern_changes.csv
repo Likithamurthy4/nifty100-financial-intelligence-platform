@@ -1,0 +1,388 @@
+company_id,from_year,to_year,from_pattern,to_pattern
+ADANIENSOL,2014.0,2015,Balanced,Distress Signal
+ADANIENSOL,2015.0,2016,Distress Signal,Deleverager
+ADANIENSOL,2017.0,2018,Deleverager,Reinvestor
+ADANIENSOL,2020.0,2021,Reinvestor,Deleverager
+ADANIENSOL,2022.0,2023,Deleverager,Reinvestor
+ADANIENSOL,2023.0,2024,Reinvestor,Deleverager
+ADANIENT,2013.0,2014,Reinvestor,Deleverager
+ADANIENT,2014.0,2015,Deleverager,Reinvestor
+ADANIENT,2015.0,2016,Reinvestor,Deleverager
+ADANIENT,2016.0,2017,Deleverager,Reinvestor
+ADANIENT,2018.0,2019,Reinvestor,Shareholder Returns
+ADANIENT,2019.0,2020,Shareholder Returns,Deleverager
+ADANIENT,2020.0,2021,Deleverager,Reinvestor
+ADANIENT,2022.0,2023,Reinvestor,Deleverager
+ADANIENT,2023.0,2024,Deleverager,Reinvestor
+ADANIGREEN,2022.0,2023,Reinvestor,Deleverager
+ADANIGREEN,2023.0,2024,Deleverager,Reinvestor
+ADANIPORTS,2014.0,2015,Reinvestor,Deleverager
+ADANIPORTS,2015.0,2016,Deleverager,Reinvestor
+ADANIPORTS,2016.0,2017,Reinvestor,Deleverager
+ADANIPORTS,2018.0,2019,Deleverager,Reinvestor
+ADANIPORTS,2019.0,2020,Reinvestor,Deleverager
+ADANIPORTS,2020.0,2021,Deleverager,Reinvestor
+ADANIPORTS,2021.0,2022,Reinvestor,Deleverager
+ADANIPOWER,2014.0,2015,Reinvestor,Deleverager
+ADANIPOWER,2021.0,2022,Deleverager,Shareholder Returns
+AMBUJACEM,2021.0,2023,Deleverager,Reinvestor
+APOLLOHOSP,2013.0,2014,Reinvestor,Deleverager
+APOLLOHOSP,2014.0,2015,Deleverager,Reinvestor
+APOLLOHOSP,2017.0,2018,Reinvestor,Deleverager
+AXISBANK,2014.0,2015,Reinvestor,Distress Signal
+AXISBANK,2016.0,2017,Distress Signal,Deleverager
+AXISBANK,2017.0,2018,Deleverager,Distress Signal
+AXISBANK,2018.0,2019,Distress Signal,Reinvestor
+AXISBANK,2023.0,2024,Reinvestor,Distress Signal
+BAJAJ-AUTO,2019.0,2020,Deleverager,Shareholder Returns
+BAJAJ-AUTO,2020.0,2021,Shareholder Returns,Deleverager
+BAJAJ-AUTO,2021.0,2022,Deleverager,Shareholder Returns
+BAJAJ-AUTO,2023.0,2024,Shareholder Returns,Deleverager
+BAJAJFINSV,2020.0,2021,Distress Signal,Reinvestor
+BAJAJFINSV,2021.0,2022,Reinvestor,Distress Signal
+BAJAJHLDNG,2015.0,2016,Deleverager,Shareholder Returns
+BAJAJHLDNG,2016.0,2017,Shareholder Returns,Cash Burner
+BAJAJHLDNG,2017.0,2018,Cash Burner,Deleverager
+BANKBARODA,2013.0,2014,Deleverager,Reinvestor
+BANKBARODA,2014.0,2015,Reinvestor,Deleverager
+BANKBARODA,2015.0,2016,Deleverager,Cash Burner
+BANKBARODA,2016.0,2017,Cash Burner,Deleverager
+BANKBARODA,2017.0,2018,Deleverager,Distress Signal
+BANKBARODA,2019.0,2020,Distress Signal,Reinvestor
+BANKBARODA,2020.0,2021,Reinvestor,Cash Burner
+BANKBARODA,2021.0,2022,Cash Burner,Deleverager
+BANKBARODA,2022.0,2023,Deleverager,Cash Burner
+BANKBARODA,2023.0,2024,Cash Burner,Distress Signal
+BEL,2014.0,2015,Cash Burner,Deleverager
+BEL,2016.0,2017,Deleverager,Cash Burner
+BEL,2018.0,2019,Cash Burner,Deleverager
+BEL,2022.0,2023,Deleverager,Shareholder Returns
+BEL,2023.0,2024,Shareholder Returns,Deleverager
+BHARTIARTL,2013.0,2014,Deleverager,Reinvestor
+BHARTIARTL,2014.0,2015,Reinvestor,Deleverager
+BHARTIARTL,2017.0,2018,Deleverager,Reinvestor
+BHARTIARTL,2020.0,2021,Reinvestor,Deleverager
+BHEL,2014.0,2015,Reinvestor,Shareholder Returns
+BHEL,2016.0,2017,Shareholder Returns,Deleverager
+BHEL,2017.0,2018,Deleverager,Shareholder Returns
+BHEL,2018.0,2019,Shareholder Returns,Cash Burner
+BHEL,2019.0,2020,Cash Burner,Distress Signal
+BHEL,2020.0,2021,Distress Signal,Deleverager
+BHEL,2022.0,2023,Deleverager,Distress Signal
+BOSCHLTD,2016.0,2017,Deleverager,Shareholder Returns
+BOSCHLTD,2017.0,2018,Shareholder Returns,Deleverager
+BOSCHLTD,2018.0,2019,Deleverager,Shareholder Returns
+BOSCHLTD,2019.0,2020,Shareholder Returns,Deleverager
+BOSCHLTD,2022.0,2023,Deleverager,Shareholder Returns
+BPCL,2016.0,2017,Deleverager,Reinvestor
+BPCL,2017.0,2018,Reinvestor,Deleverager
+BPCL,2018.0,2019,Deleverager,Reinvestor
+BPCL,2020.0,2021,Reinvestor,Deleverager
+BRITANNIA,2013.0,2014,Shareholder Returns,Deleverager
+BRITANNIA,2019.0,2020,Deleverager,Reinvestor
+BRITANNIA,2020.0,2021,Reinvestor,Shareholder Returns
+BRITANNIA,2022.0,2023,Shareholder Returns,Deleverager
+BRITANNIA,2023.0,2024,Deleverager,Shareholder Returns
+CANBK,2016.0,2017,Deleverager,Reinvestor
+CANBK,2017.0,2018,Reinvestor,Distress Signal
+CANBK,2018.0,2019,Distress Signal,Deleverager
+CANBK,2019.0,2020,Deleverager,Distress Signal
+CANBK,2020.0,2021,Distress Signal,Reinvestor
+CANBK,2022.0,2023,Reinvestor,Distress Signal
+CANBK,2023.0,2024,Distress Signal,Deleverager
+CIPLA,2013.0,2014,Reinvestor,Deleverager
+CIPLA,2014.0,2015,Deleverager,Reinvestor
+CIPLA,2016.0,2017,Reinvestor,Deleverager
+CIPLA,2019.0,2020,Deleverager,Shareholder Returns
+CIPLA,2020.0,2021,Shareholder Returns,Deleverager
+COALINDIA,2013.0,2014,Deleverager,Shareholder Returns
+COALINDIA,2017.0,2018,Shareholder Returns,Deleverager
+COALINDIA,2019.0,2020,Deleverager,Shareholder Returns
+COALINDIA,2021.0,2022,Shareholder Returns,Deleverager
+DABUR,2018.0,2019,Deleverager,Shareholder Returns
+DABUR,2019.0,2020,Shareholder Returns,Deleverager
+DIVISLAB,2016.0,2017,Deleverager,Reinvestor
+DIVISLAB,2017.0,2018,Reinvestor,Deleverager
+DIVISLAB,2020.0,2021,Deleverager,Shareholder Returns
+DIVISLAB,2021.0,2022,Shareholder Returns,Deleverager
+DLF,2015.0,2016,Shareholder Returns,Deleverager
+DLF,2016.0,2017,Deleverager,Distress Signal
+DLF,2017.0,2018,Distress Signal,Deleverager
+DLF,2018.0,2019,Deleverager,Cash Accumulator
+DLF,2019.0,2020,Cash Accumulator,Shareholder Returns
+DLF,2022.0,2023,Shareholder Returns,Deleverager
+DLF,2023.0,2024,Deleverager,Reinvestor
+DMART,2017.0,2018,Reinvestor,Shareholder Returns
+DMART,2018.0,2019,Shareholder Returns,Reinvestor
+DMART,2020.0,2021,Reinvestor,Deleverager
+EICHERMOT,2016.0,2017,Deleverager,Reinvestor
+EICHERMOT,2017.0,2018,Reinvestor,Deleverager
+GAIL,2013.0,2014,Reinvestor,Deleverager
+GAIL,2019.0,2020,Deleverager,Reinvestor
+GAIL,2020.0,2021,Reinvestor,Deleverager
+GAIL,2022.0,2023,Deleverager,Reinvestor
+GAIL,2023.0,2024,Reinvestor,Deleverager
+GODREJCP,2013.0,2014,Reinvestor,Deleverager
+GODREJCP,2016.0,2017,Deleverager,Reinvestor
+GODREJCP,2017.0,2018,Reinvestor,Deleverager
+GODREJCP,2018.0,2019,Deleverager,Shareholder Returns
+GODREJCP,2019.0,2020,Shareholder Returns,Deleverager
+GODREJCP,2023.0,2024,Deleverager,Reinvestor
+GRASIM,2013.0,2014,Reinvestor,Deleverager
+GRASIM,2017.0,2018,Deleverager,Distress Signal
+GRASIM,2019.0,2020,Distress Signal,Deleverager
+GRASIM,2022.0,2023,Deleverager,Distress Signal
+HAL,2018.0,2019,Cash Burner,Distress Signal
+HAL,2019.0,2020,Distress Signal,Reinvestor
+HAL,2020.0,2021,Reinvestor,Deleverager
+HAVELLS,2018.0,2019,Deleverager,Shareholder Returns
+HAVELLS,2019.0,2020,Shareholder Returns,Deleverager
+HAVELLS,2020.0,2021,Deleverager,Reinvestor
+HAVELLS,2021.0,2022,Reinvestor,Deleverager
+HAVELLS,2022.0,2023,Deleverager,Shareholder Returns
+HAVELLS,2023.0,2024,Shareholder Returns,Deleverager
+HCLTECH,2021.0,2022,Deleverager,Shareholder Returns
+HCLTECH,2022.0,2023,Shareholder Returns,Deleverager
+HDFCBANK,2013.0,2014,Distress Signal,Reinvestor
+HDFCBANK,2014.0,2015,Reinvestor,Distress Signal
+HDFCBANK,2016.0,2017,Distress Signal,Deleverager
+HDFCBANK,2017.0,2018,Deleverager,Reinvestor
+HDFCBANK,2018.0,2019,Reinvestor,Distress Signal
+HDFCBANK,2020.0,2021,Distress Signal,Deleverager
+HDFCBANK,2021.0,2022,Deleverager,Distress Signal
+HDFCBANK,2022.0,2023,Distress Signal,Reinvestor
+HDFCBANK,2023.0,2024,Reinvestor,Shareholder Returns
+HDFCLIFE,2014.0,2015,Insufficient Data,Deleverager
+HDFCLIFE,2019.0,2020,Deleverager,Reinvestor
+HDFCLIFE,2021.0,2022,Reinvestor,Deleverager
+HDFCLIFE,2022.0,2023,Deleverager,Reinvestor
+HDFCLIFE,2023.0,2024,Reinvestor,Deleverager
+HEROMOTOCO,2014.0,2015,Deleverager,Shareholder Returns
+HEROMOTOCO,2015.0,2016,Shareholder Returns,Deleverager
+HEROMOTOCO,2018.0,2019,Deleverager,Shareholder Returns
+HEROMOTOCO,2019.0,2020,Shareholder Returns,Deleverager
+HINDALCO,2014.0,2015,Reinvestor,Deleverager
+HINDALCO,2017.0,2018,Deleverager,Shareholder Returns
+HINDALCO,2018.0,2019,Shareholder Returns,Deleverager
+HINDALCO,2019.0,2020,Deleverager,Reinvestor
+HINDALCO,2020.0,2021,Reinvestor,Deleverager
+HINDUNILVR,2013.0,2014,Shareholder Returns,Deleverager
+HINDUNILVR,2014.0,2015,Deleverager,Shareholder Returns
+HINDUNILVR,2015.0,2016,Shareholder Returns,Deleverager
+HINDUNILVR,2019.0,2020,Deleverager,Shareholder Returns
+HINDUNILVR,2020.0,2021,Shareholder Returns,Deleverager
+ICICIBANK,2014.0,2015,Reinvestor,Distress Signal
+ICICIBANK,2015.0,2016,Distress Signal,Reinvestor
+ICICIBANK,2016.0,2017,Reinvestor,Deleverager
+ICICIBANK,2017.0,2018,Deleverager,Reinvestor
+ICICIBANK,2018.0,2019,Reinvestor,Deleverager
+ICICIBANK,2019.0,2020,Deleverager,Reinvestor
+ICICIBANK,2020.0,2021,Reinvestor,Deleverager
+ICICIBANK,2021.0,2022,Deleverager,Reinvestor
+ICICIBANK,2022.0,2023,Reinvestor,Distress Signal
+ICICIBANK,2023.0,2024,Distress Signal,Reinvestor
+ICICIGI,2014.0,2015,Reinvestor,Cash Burner
+ICICIGI,2015.0,2016,Cash Burner,Deleverager
+ICICIGI,2016.0,2017,Deleverager,Reinvestor
+ICICIGI,2017.0,2018,Reinvestor,Deleverager
+ICICIGI,2021.0,2022,Deleverager,Shareholder Returns
+ICICIGI,2022.0,2023,Shareholder Returns,Deleverager
+ICICIPRULI,2014.0,2015,Cash Burner,Deleverager
+ICICIPRULI,2015.0,2016,Deleverager,Shareholder Returns
+ICICIPRULI,2016.0,2017,Shareholder Returns,Deleverager
+ICICIPRULI,2020.0,2021,Deleverager,Reinvestor
+ICICIPRULI,2021.0,2022,Reinvestor,Deleverager
+ICICIPRULI,2023.0,2024,Deleverager,Cash Burner
+INDIGO,2014.0,2015,Reinvestor,Deleverager
+INDIGO,2017.0,2018,Deleverager,Reinvestor
+INDIGO,2018.0,2019,Reinvestor,Deleverager
+INDIGO,2020.0,2021,Deleverager,Cash Burner
+INDIGO,2021.0,2022,Cash Burner,Shareholder Returns
+INDIGO,2022.0,2023,Shareholder Returns,Deleverager
+INDUSINDBK,2016.0,2017,Distress Signal,Deleverager
+INDUSINDBK,2017.0,2018,Deleverager,Distress Signal
+INDUSINDBK,2020.0,2021,Distress Signal,Deleverager
+INDUSINDBK,2022.0,2023,Deleverager,Distress Signal
+INDUSINDBK,2023.0,2024,Distress Signal,Cash Burner
+INFY,2014.0,2015,Deleverager,Shareholder Returns
+INFY,2015.0,2016,Shareholder Returns,Deleverager
+INFY,2017.0,2018,Deleverager,Shareholder Returns
+INFY,2018.0,2019,Shareholder Returns,Deleverager
+IOC,2013.0,2014,Reinvestor,Deleverager
+IOC,2018.0,2019,Deleverager,Reinvestor
+IOC,2020.0,2021,Reinvestor,Deleverager
+IRCTC,2015.0,2016,Deleverager,Shareholder Returns
+IRCTC,2018.0,2019,Shareholder Returns,Deleverager
+IRCTC,2019.0,2020,Deleverager,Shareholder Returns
+IRCTC,2020.0,2021,Shareholder Returns,Deleverager
+IRFC,2023.0,2024,Distress Signal,Deleverager
+ITC,2020.0,2021,Deleverager,Shareholder Returns
+ITC,2021.0,2022,Shareholder Returns,Deleverager
+ITC,2023.0,2024,Deleverager,Shareholder Returns
+JINDALSTEL,2015.0,2016,Reinvestor,Deleverager
+JINDALSTEL,2023.0,2024,Deleverager,Reinvestor
+JIOFIN,2023.0,2024,Deleverager,Cash Burner
+JSWENERGY,2019.0,2020,Deleverager,Shareholder Returns
+JSWENERGY,2020.0,2021,Shareholder Returns,Deleverager
+JSWENERGY,2022.0,2023,Deleverager,Reinvestor
+JSWSTEEL,2013.0,2014,Deleverager,Reinvestor
+JSWSTEEL,2014.0,2015,Reinvestor,Deleverager
+JSWSTEEL,2018.0,2019,Deleverager,Reinvestor
+JSWSTEEL,2020.0,2021,Reinvestor,Deleverager
+KOTAKBANK,2013.0,2014,Reinvestor,Deleverager
+KOTAKBANK,2014.0,2015,Deleverager,Reinvestor
+KOTAKBANK,2017.0,2018,Reinvestor,Distress Signal
+KOTAKBANK,2018.0,2019,Distress Signal,Reinvestor
+KOTAKBANK,2019.0,2020,Reinvestor,Deleverager
+KOTAKBANK,2021.0,2022,Deleverager,Reinvestor
+KOTAKBANK,2022.0,2023,Reinvestor,Distress Signal
+KOTAKBANK,2023.0,2024,Distress Signal,Reinvestor
+LICI,2019.0,2020,Shareholder Returns,Deleverager
+LICI,2020.0,2021,Deleverager,Shareholder Returns
+LICI,2021.0,2022,Shareholder Returns,Cash Burner
+LICI,2022.0,2023,Cash Burner,Deleverager
+LODHA,2016.0,2017,Reinvestor,Deleverager
+LODHA,2017.0,2018,Deleverager,Reinvestor
+LODHA,2018.0,2019,Reinvestor,Distress Signal
+LODHA,2019.0,2020,Distress Signal,Shareholder Returns
+LODHA,2023.0,2024,Shareholder Returns,Reinvestor
+LT,2016.0,2017,Distress Signal,Reinvestor
+LT,2017.0,2018,Reinvestor,Distress Signal
+LT,2019.0,2020,Distress Signal,Reinvestor
+LT,2020.0,2021,Reinvestor,Deleverager
+LT,2023.0,2024,Deleverager,Shareholder Returns
+LTIM,2013.0,2014,Deleverager,Shareholder Returns
+LTIM,2014.0,2015,Shareholder Returns,Deleverager
+M&M,2014.0,2015,Distress Signal,Reinvestor
+M&M,2018.0,2019,Reinvestor,Distress Signal
+M&M,2020.0,2021,Distress Signal,Reinvestor
+M&M,2021.0,2022,Reinvestor,Deleverager
+M&M,2022.0,2023,Deleverager,Distress Signal
+MOTHERSON,2014.0,2015,Deleverager,Reinvestor
+MOTHERSON,2015.0,2016,Reinvestor,Deleverager
+MOTHERSON,2016.0,2017,Deleverager,Reinvestor
+MOTHERSON,2017.0,2018,Reinvestor,Deleverager
+MOTHERSON,2023.0,2024,Deleverager,Reinvestor
+NAUKRI,2013.0,2014,Deleverager,Reinvestor
+NAUKRI,2015.0,2016,Reinvestor,Deleverager
+NAUKRI,2019.0,2020,Deleverager,Shareholder Returns
+NAUKRI,2020.0,2021,Shareholder Returns,Reinvestor
+NESTLEIND,2018.0,2019,Deleverager,Shareholder Returns
+NESTLEIND,2019.0,2020,Shareholder Returns,Deleverager
+NHPC,2019.0,2020,Deleverager,Reinvestor
+NHPC,2020.0,2021,Reinvestor,Deleverager
+NTPC,2013.0,2014,Reinvestor,Deleverager
+NTPC,2016.0,2017,Deleverager,Reinvestor
+NTPC,2020.0,2021,Reinvestor,Deleverager
+ONGC,2013.0,2014,Deleverager,Reinvestor
+ONGC,2014.0,2015,Reinvestor,Deleverager
+ONGC,2017.0,2018,Deleverager,Reinvestor
+ONGC,2018.0,2019,Reinvestor,Deleverager
+PFC,2016.0,2017,Distress Signal,Reinvestor
+PFC,2017.0,2018,Reinvestor,Distress Signal
+PFC,2021.0,2022,Distress Signal,Deleverager
+PFC,2022.0,2023,Deleverager,Distress Signal
+PIDILITIND,2016.0,2017,Deleverager,Reinvestor
+PIDILITIND,2017.0,2018,Reinvestor,Shareholder Returns
+PIDILITIND,2018.0,2019,Shareholder Returns,Deleverager
+PIDILITIND,2019.0,2020,Deleverager,Shareholder Returns
+PIDILITIND,2020.0,2021,Shareholder Returns,Deleverager
+PNB,2013.0,2014,Cash Burner,Reinvestor
+PNB,2016.0,2017,Reinvestor,Shareholder Returns
+PNB,2017.0,2018,Shareholder Returns,Distress Signal
+PNB,2020.0,2021,Distress Signal,Reinvestor
+PNB,2023.0,2024,Reinvestor,Distress Signal
+POWERGRID,2018.0,2019,Reinvestor,Deleverager
+POWERGRID,2021.0,2022,Deleverager,Shareholder Returns
+POWERGRID,2022.0,2023,Shareholder Returns,Deleverager
+RECLTD,2016.0,2017,Distress Signal,Deleverager
+RECLTD,2017.0,2018,Deleverager,Distress Signal
+RELIANCE,2015.0,2016,Reinvestor,Deleverager
+RELIANCE,2016.0,2017,Deleverager,Reinvestor
+RELIANCE,2017.0,2018,Reinvestor,Deleverager
+RELIANCE,2018.0,2019,Deleverager,Reinvestor
+RELIANCE,2019.0,2020,Reinvestor,Deleverager
+RELIANCE,2020.0,2021,Deleverager,Reinvestor
+RELIANCE,2023.0,2024,Reinvestor,Deleverager
+SBILIFE,2020.0,2021,Deleverager,Reinvestor
+SBILIFE,2021.0,2022,Reinvestor,Deleverager
+SBIN,2013.0,2014,Deleverager,Reinvestor
+SBIN,2014.0,2015,Reinvestor,Deleverager
+SBIN,2015.0,2016,Deleverager,Reinvestor
+SBIN,2016.0,2017,Reinvestor,Deleverager
+SBIN,2017.0,2018,Deleverager,Distress Signal
+SBIN,2018.0,2019,Distress Signal,Cash Accumulator
+SBIN,2019.0,2020,Cash Accumulator,Reinvestor
+SBIN,2021.0,2022,Reinvestor,Deleverager
+SBIN,2022.0,2023,Deleverager,Distress Signal
+SBIN,2023.0,2024,Distress Signal,Deleverager
+SHREECEM,2017.0,2018,Deleverager,Reinvestor
+SHREECEM,2018.0,2019,Reinvestor,Deleverager
+SHREECEM,2019.0,2020,Deleverager,Reinvestor
+SHREECEM,2020.0,2021,Reinvestor,Deleverager
+SIEMENS,2017.0,2018,Shareholder Returns,Deleverager
+SIEMENS,2019.0,2020,Deleverager,Shareholder Returns
+SIEMENS,2020.0,2021,Shareholder Returns,Deleverager
+SUNPHARMA,2013.0,2014,Deleverager,Reinvestor
+SUNPHARMA,2014.0,2015,Reinvestor,Deleverager
+SUNPHARMA,2020.0,2021,Deleverager,Shareholder Returns
+SUNPHARMA,2021.0,2022,Shareholder Returns,Deleverager
+SUNPHARMA,2022.0,2023,Deleverager,Reinvestor
+SUNPHARMA,2023.0,2024,Reinvestor,Deleverager
+TATACONSUM,2013.0,2014,Cash Accumulator,Deleverager
+TATACONSUM,2015.0,2016,Deleverager,Shareholder Returns
+TATACONSUM,2017.0,2018,Shareholder Returns,Deleverager
+TATACONSUM,2018.0,2019,Deleverager,Shareholder Returns
+TATACONSUM,2019.0,2020,Shareholder Returns,Deleverager
+TATACONSUM,2023.0,2024,Deleverager,Reinvestor
+TATAMOTORS,2014.0,2015,Deleverager,Reinvestor
+TATAMOTORS,2015.0,2016,Reinvestor,Deleverager
+TATAMOTORS,2016.0,2017,Deleverager,Reinvestor
+TATAMOTORS,2021.0,2022,Reinvestor,Deleverager
+TATAPOWER,2016.0,2017,Deleverager,Reinvestor
+TATAPOWER,2017.0,2018,Reinvestor,Deleverager
+TATAPOWER,2020.0,2021,Deleverager,Shareholder Returns
+TATAPOWER,2021.0,2022,Shareholder Returns,Deleverager
+TATAPOWER,2022.0,2023,Deleverager,Reinvestor
+TATAPOWER,2023.0,2024,Reinvestor,Deleverager
+TATASTEEL,2013.0,2014,Deleverager,Reinvestor
+TATASTEEL,2014.0,2015,Reinvestor,Deleverager
+TATASTEEL,2017.0,2018,Deleverager,Reinvestor
+TATASTEEL,2018.0,2019,Reinvestor,Deleverager
+TCS,2017.0,2018,Deleverager,Shareholder Returns
+TCS,2020.0,2021,Shareholder Returns,Deleverager
+TCS,2022.0,2023,Deleverager,Shareholder Returns
+TECHM,2013.0,2014,Reinvestor,Shareholder Returns
+TECHM,2014.0,2015,Shareholder Returns,Deleverager
+TECHM,2019.0,2020,Deleverager,Shareholder Returns
+TECHM,2020.0,2021,Shareholder Returns,Deleverager
+TECHM,2021.0,2022,Deleverager,Shareholder Returns
+TECHM,2022.0,2023,Shareholder Returns,Deleverager
+TITAN,2013.0,2014,Deleverager,Distress Signal
+TITAN,2014.0,2015,Distress Signal,Deleverager
+TITAN,2017.0,2018,Deleverager,Cash Burner
+TITAN,2018.0,2019,Cash Burner,Deleverager
+TITAN,2019.0,2020,Deleverager,Cash Burner
+TITAN,2020.0,2021,Cash Burner,Deleverager
+TITAN,2021.0,2022,Deleverager,Cash Burner
+TITAN,2022.0,2023,Cash Burner,Reinvestor
+TITAN,2023.0,2024,Reinvestor,Deleverager
+TORNTPHARM,2015.0,2016,Reinvestor,Deleverager
+TORNTPHARM,2017.0,2018,Deleverager,Reinvestor
+TORNTPHARM,2018.0,2019,Reinvestor,Deleverager
+TORNTPHARM,2019.0,2020,Deleverager,Shareholder Returns
+TORNTPHARM,2020.0,2021,Shareholder Returns,Deleverager
+TORNTPHARM,2022.0,2023,Deleverager,Reinvestor
+TORNTPHARM,2023.0,2024,Reinvestor,Deleverager
+TRENT,2013.0,2014,Reinvestor,Cash Burner
+TRENT,2014.0,2015,Cash Burner,Distress Signal
+TRENT,2015.0,2016,Distress Signal,Deleverager
+TRENT,2018.0,2019,Deleverager,Reinvestor
+TRENT,2020.0,2021,Reinvestor,Shareholder Returns
+TRENT,2022.0,2023,Shareholder Returns,Deleverager
+TVSMOTOR,2014.0,2015,Deleverager,Reinvestor
+TVSMOTOR,2015.0,2016,Reinvestor,Deleverager
+TVSMOTOR,2017.0,2018,Deleverager,Reinvestor
+TVSMOTOR,2018.0,2019,Reinvestor,Distress Signal
+TVSMOTOR,2019.0,2020,Distress Signal,Reinvestor
+TVSMOTOR,2021.0,2022,Reinvestor,Distress Signal

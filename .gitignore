@@ -15,7 +15,15 @@ __pycache__/
 logs/
 
 # Output files
+# Output files
+
 output/*.csv
+
+# Sprint 5 deliverables
+!output/pros_cons_generated.csv
+!output/analysis_parsed.csv
+!output/distress_alerts.csv
+!output/pattern_changes.csv
 
 # SQLite Database
 db/*.db

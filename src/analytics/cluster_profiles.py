@@ -13,15 +13,12 @@ Generates:
    - P10, P25, P50, P75, P90, Mean, Std
 """
 
-from pathlib import Path
 import sqlite3
+from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.stats import zscore
-
 
 # ============================================================
 # PATHS
@@ -72,11 +69,12 @@ CORE_KPIS = [
 # DATABASE
 # ============================================================
 
+
 def load_data():
     conn = sqlite3.connect(DB_PATH)
 
     ratios = pd.read_sql_query(
-    """
+        """
     SELECT
         company_id,
         year,
@@ -93,8 +91,8 @@ def load_data():
     FROM financial_ratios
     WHERE year IS NOT NULL
     """,
-    conn,
-)
+        conn,
+    )
 
     sectors = pd.read_sql_query(
         """
@@ -132,6 +130,7 @@ def load_data():
 # LATEST YEAR DATA
 # ============================================================
 
+
 def build_latest_year_dataset(ratios, sectors, companies):
     """
     Select latest available ratio year per company and
@@ -140,16 +139,9 @@ def build_latest_year_dataset(ratios, sectors, companies):
 
     ratios = ratios.copy()
 
-    ratios = ratios.sort_values(
-        ["company_id", "year"]
-    )
+    ratios = ratios.sort_values(["company_id", "year"])
 
-    latest = (
-        ratios
-        .groupby("company_id", as_index=False)
-        .tail(1)
-        .copy()
-    )
+    latest = ratios.groupby("company_id", as_index=False).tail(1).copy()
 
     latest = latest.merge(
         companies,
@@ -176,6 +168,7 @@ def build_latest_year_dataset(ratios, sectors, companies):
 # SECTOR MEDIAN IMPUTATION
 # ============================================================
 
+
 def sector_median_imputation(df, columns):
     """
     Fill missing values using broad-sector medians.
@@ -192,21 +185,11 @@ def sector_median_imputation(df, columns):
             errors="coerce",
         )
 
-        sector_median = (
-            result
-            .groupby("broad_sector")[column]
-            .transform("median")
-        )
+        sector_median = result.groupby("broad_sector")[column].transform("median")
 
-        result[column] = (
-            result[column]
-            .fillna(sector_median)
-        )
+        result[column] = result[column].fillna(sector_median)
 
-        result[column] = (
-            result[column]
-            .fillna(result[column].median())
-        )
+        result[column] = result[column].fillna(result[column].median())
 
     return result
 
@@ -214,6 +197,7 @@ def sector_median_imputation(df, columns):
 # ============================================================
 # CLUSTER PROFILES
 # ============================================================
+
 
 def generate_cluster_profiles(latest):
     """
@@ -244,8 +228,7 @@ def generate_cluster_profiles(latest):
     )
 
     mean_profile = (
-        df
-        .groupby(
+        df.groupby(
             [
                 "cluster_id",
                 "cluster_name",
@@ -256,8 +239,7 @@ def generate_cluster_profiles(latest):
     )
 
     median_profile = (
-        df
-        .groupby(
+        df.groupby(
             [
                 "cluster_id",
                 "cluster_name",
@@ -294,18 +276,14 @@ def generate_cluster_profiles(latest):
         ]
     )
 
-    output_path = (
-        OUTPUT_DIR / "cluster_profiles.csv"
-    )
+    output_path = OUTPUT_DIR / "cluster_profiles.csv"
 
     profile.to_csv(
         output_path,
         index=False,
     )
 
-    print(
-        f"Saved cluster profiles: {output_path}"
-    )
+    print(f"Saved cluster profiles: {output_path}")
 
     return df, profile
 
@@ -313,6 +291,7 @@ def generate_cluster_profiles(latest):
 # ============================================================
 # CORRELATION HEATMAP
 # ============================================================
+
 
 def generate_correlation_heatmap(latest):
     """
@@ -327,18 +306,12 @@ def generate_correlation_heatmap(latest):
         CORE_KPIS,
     )
 
-    correlation = df[
-        CORE_KPIS
-    ].corr(
-        method="pearson"
-    )
+    correlation = df[CORE_KPIS].corr(method="pearson")
 
     print("\nCorrelation matrix:")
     print(correlation.round(3))
 
-    plt.figure(
-        figsize=(14, 11)
-    )
+    plt.figure(figsize=(14, 11))
 
     sns.heatmap(
         correlation,
@@ -348,21 +321,14 @@ def generate_correlation_heatmap(latest):
         center=0,
         square=True,
         linewidths=0.5,
-        cbar_kws={
-            "label": "Pearson Correlation"
-        },
+        cbar_kws={"label": "Pearson Correlation"},
     )
 
-    plt.title(
-        "Nifty 100 Financial KPI Correlation Matrix"
-    )
+    plt.title("Nifty 100 Financial KPI Correlation Matrix")
 
     plt.tight_layout()
 
-    output_path = (
-        REPORTS_DIR
-        / "correlation_heatmap.png"
-    )
+    output_path = REPORTS_DIR / "correlation_heatmap.png"
 
     plt.savefig(
         output_path,
@@ -372,9 +338,7 @@ def generate_correlation_heatmap(latest):
 
     plt.close()
 
-    print(
-        f"Saved correlation heatmap: {output_path}"
-    )
+    print(f"Saved correlation heatmap: {output_path}")
 
     return correlation
 
@@ -382,6 +346,7 @@ def generate_correlation_heatmap(latest):
 # ============================================================
 # OUTLIER DETECTION
 # ============================================================
+
 
 def generate_outlier_report(latest):
     """
@@ -417,26 +382,18 @@ def generate_outlier_report(latest):
             if pd.isna(sector_std) or sector_std == 0:
                 continue
 
-            group["z_score"] = (
-                values - sector_mean
-            ) / sector_std
+            group["z_score"] = (values - sector_mean) / sector_std
 
-            outliers = group[
-                group["z_score"].abs() > 3
-            ]
+            outliers = group[group["z_score"].abs() > 3]
 
             for _, row in outliers.iterrows():
 
                 records.append(
                     {
-                        "company_id": row[
-                            "company_id"
-                        ],
+                        "company_id": row["company_id"],
                         "metric": metric,
                         "value": row[metric],
-                        "z_score": row[
-                            "z_score"
-                        ],
+                        "z_score": row["z_score"],
                         "sector": sector,
                         "sector_mean": sector_mean,
                         "sector_std": sector_std,
@@ -465,22 +422,16 @@ def generate_outlier_report(latest):
             ascending=False,
         )
 
-    output_path = (
-        OUTPUT_DIR / "outlier_report.csv"
-    )
+    output_path = OUTPUT_DIR / "outlier_report.csv"
 
     report.to_csv(
         output_path,
         index=False,
     )
 
-    print(
-        f"\nOutliers detected: {len(report)}"
-    )
+    print(f"\nOutliers detected: {len(report)}")
 
-    print(
-        f"Saved outlier report: {output_path}"
-    )
+    print(f"Saved outlier report: {output_path}")
 
     return report
 
@@ -488,6 +439,7 @@ def generate_outlier_report(latest):
 # ============================================================
 # PORTFOLIO STATISTICS
 # ============================================================
+
 
 def generate_portfolio_stats(latest):
     """
@@ -524,22 +476,16 @@ def generate_portfolio_stats(latest):
             }
         )
 
-    stats = pd.DataFrame(
-        records
-    )
+    stats = pd.DataFrame(records)
 
-    output_path = (
-        OUTPUT_DIR / "portfolio_stats.csv"
-    )
+    output_path = OUTPUT_DIR / "portfolio_stats.csv"
 
     stats.to_csv(
         output_path,
         index=False,
     )
 
-    print(
-        f"Saved portfolio statistics: {output_path}"
-    )
+    print(f"Saved portfolio statistics: {output_path}")
 
     return stats
 
@@ -548,20 +494,16 @@ def generate_portfolio_stats(latest):
 # MAIN
 # ============================================================
 
+
 def run_day37():
 
     print("=" * 65)
     print("DAY 37 - CLUSTER PROFILING & STATISTICS")
     print("=" * 65)
 
-    ratios, sectors, companies, clusters = (
-        load_data()
-    )
+    ratios, sectors, companies, _ = load_data()
 
-    print(
-        f"Companies in database: "
-        f"{companies['company_id'].nunique()}"
-    )
+    print(f"Companies in database: " f"{companies['company_id'].nunique()}")
 
     latest = build_latest_year_dataset(
         ratios,
@@ -569,15 +511,10 @@ def run_day37():
         companies,
     )
 
-    print(
-        f"Latest-year company rows: "
-        f"{latest['company_id'].nunique()}"
-    )
+    print(f"Latest-year company rows: " f"{latest['company_id'].nunique()}")
 
     if latest["company_id"].nunique() != 92:
-        raise ValueError(
-            "Expected 92 companies in latest-year dataset."
-        )
+        raise ValueError("Expected 92 companies in latest-year dataset.")
 
     # --------------------------------------------------------
     # Cluster profiling
@@ -587,17 +524,9 @@ def run_day37():
     print("1. CLUSTER PROFILES")
     print("=" * 65)
 
-    cluster_data, profiles = (
-        generate_cluster_profiles(
-            latest
-        )
-    )
+    cluster_data, profiles = generate_cluster_profiles(latest)
 
-    print(
-        profiles.to_string(
-            index=False
-        )
-    )
+    print(profiles.to_string(index=False))
 
     # --------------------------------------------------------
     # Correlation heatmap
@@ -607,11 +536,7 @@ def run_day37():
     print("2. CORRELATION HEATMAP")
     print("=" * 65)
 
-    correlation = (
-        generate_correlation_heatmap(
-            latest
-        )
-    )
+    correlation = generate_correlation_heatmap(latest)
 
     # --------------------------------------------------------
     # Outlier report
@@ -621,9 +546,7 @@ def run_day37():
     print("3. OUTLIER DETECTION")
     print("=" * 65)
 
-    outliers = generate_outlier_report(
-        latest
-    )
+    outliers = generate_outlier_report(latest)
 
     # --------------------------------------------------------
     # Portfolio statistics
@@ -633,16 +556,10 @@ def run_day37():
     print("4. PORTFOLIO STATISTICS")
     print("=" * 65)
 
-    stats = generate_portfolio_stats(
-        latest
-    )
+    stats = generate_portfolio_stats(latest)
 
     print("\nPortfolio statistics:")
-    print(
-        stats.to_string(
-            index=False
-        )
-    )
+    print(stats.to_string(index=False))
 
     # --------------------------------------------------------
     # Final QA
@@ -659,8 +576,7 @@ def run_day37():
 
     print(
         "Clusters:",
-        cluster_data["cluster_id"]
-        .nunique(),
+        cluster_data["cluster_id"].nunique(),
     )
 
     print(
@@ -693,29 +609,19 @@ def run_day37():
     # --------------------------------------------------------
 
     if latest["company_id"].nunique() != 92:
-        raise ValueError(
-            "Day 37 requires all 92 companies."
-        )
+        raise ValueError("Day 37 requires all 92 companies.")
 
     if cluster_data["cluster_id"].nunique() != 5:
-        raise ValueError(
-            "Expected exactly 5 clusters."
-        )
+        raise ValueError("Expected exactly 5 clusters.")
 
     if len(profiles) != 10:
-        raise ValueError(
-            "Expected 5 clusters × 2 statistics."
-        )
+        raise ValueError("Expected 5 clusters × 2 statistics.")
 
     if correlation.shape != (10, 10):
-        raise ValueError(
-            "Correlation matrix must be 10 × 10."
-        )
+        raise ValueError("Correlation matrix must be 10 × 10.")
 
     if len(stats) != 10:
-        raise ValueError(
-            "Expected portfolio statistics for 10 KPIs."
-        )
+        raise ValueError("Expected portfolio statistics for 10 KPIs.")
 
     required_outputs = [
         OUTPUT_DIR / "cluster_profiles.csv",
@@ -727,14 +633,10 @@ def run_day37():
     for path in required_outputs:
 
         if not path.exists():
-            raise FileNotFoundError(
-                f"Missing required output: {path}"
-            )
+            raise FileNotFoundError(f"Missing required output: {path}")
 
         if path.stat().st_size == 0:
-            raise ValueError(
-                f"Output is empty: {path}"
-            )
+            raise ValueError(f"Output is empty: {path}")
 
     print("\n" + "=" * 65)
     print("DAY 37 COMPLETED SUCCESSFULLY")

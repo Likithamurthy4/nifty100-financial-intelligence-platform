@@ -8,29 +8,20 @@ Writes financial_ratios table
 """
 
 import sqlite3
+
 import pandas as pd
 
+from analytics.cagr import eps_cagr, pat_cagr, revenue_cagr
+from analytics.cashflow_kpis import free_cash_flow
 from analytics.ratios import (
-    net_profit_margin,
-    operating_profit_margin,
-    return_on_equity,
-    return_on_capital_employed,
-    return_on_assets,
+    asset_turnover,
     debt_to_equity,
     interest_coverage,
-    asset_turnover
+    net_profit_margin,
+    operating_profit_margin,
+    return_on_assets,
+    return_on_equity,
 )
-
-from analytics.cagr import (
-    revenue_cagr,
-    pat_cagr,
-    eps_cagr
-)
-
-from analytics.cashflow_kpis import (
-    free_cash_flow
-)
-
 
 DATABASE = "db/nifty100.db"
 
@@ -45,61 +36,34 @@ class RatioEngine:
 
         self.data = None
 
-
     ##################################################
 
     def load_tables(self):
 
         print("Loading SQLite tables...")
 
-        self.pnl = pd.read_sql(
-            "SELECT * FROM profitandloss",
-            self.conn
-        )
+        self.pnl = pd.read_sql("SELECT * FROM profitandloss", self.conn)
 
-        self.pnl = self.pnl.drop_duplicates(
-            subset=["company_id", "year"]
-        )
+        self.pnl = self.pnl.drop_duplicates(subset=["company_id", "year"])
 
-        self.bs = pd.read_sql(
-            "SELECT * FROM balancesheet",
-            self.conn
-        )
+        self.bs = pd.read_sql("SELECT * FROM balancesheet", self.conn)
 
-        self.bs = self.bs.drop_duplicates(
-            subset=["company_id", "year"]
-        )
+        self.bs = self.bs.drop_duplicates(subset=["company_id", "year"])
 
-        self.cf = pd.read_sql(
-            "SELECT * FROM cashflow",
-            self.conn
-        )
+        self.cf = pd.read_sql("SELECT * FROM cashflow", self.conn)
 
-        self.cf = self.cf.drop_duplicates(
-            subset=["company_id", "year"]
-        )
+        self.cf = self.cf.drop_duplicates(subset=["company_id", "year"])
 
-        self.market = pd.read_sql(
-            "SELECT * FROM market_cap",
-            self.conn
-        )
+        self.market = pd.read_sql("SELECT * FROM market_cap", self.conn)
 
-        self.market = self.market.drop_duplicates(
-            subset=["company_id", "year"]
-        )
+        self.market = self.market.drop_duplicates(subset=["company_id", "year"])
 
-        self.companies = pd.read_sql(
-            "SELECT * FROM companies",
-            self.conn
-    )
+        self.companies = pd.read_sql("SELECT * FROM companies", self.conn)
 
-        self.sectors = pd.read_sql(
-            "SELECT * FROM sectors",
-            self.conn
-        )
+        self.sectors = pd.read_sql("SELECT * FROM sectors", self.conn)
 
         print("Tables Loaded Successfully")
-    
+
     ##################################################
 
     def merge_tables(self):
@@ -107,55 +71,21 @@ class RatioEngine:
         print("Merging datasets...")
 
         df = self.pnl.merge(
-
-            self.bs,
-
-            on=["company_id", "year"],
-
-            suffixes=("_pnl", "_bs")
-
+            self.bs, on=["company_id", "year"], suffixes=("_pnl", "_bs")
         )
 
-        df = df.merge(
+        df = df.merge(self.cf, on=["company_id", "year"])
 
-            self.cf,
+        df = df.merge(self.sectors, on="company_id", how="left")
 
-            on=["company_id", "year"]
-
-        )
+        df = df.merge(self.market, on=["company_id", "year"], how="left")
 
         df = df.merge(
-
-            self.sectors,
-
-            on="company_id",
-
-            how="left"
-
-        )
-
-        df = df.merge(
-
-            self.market,
-
-            on=["company_id", "year"],
-
-            how="left"
-
-        )
-
-        df = df.merge(
-
             self.companies,
-
             left_on="company_id",
-
             right_on="id",
-
             how="left",
-
-            suffixes=("", "_company")
-
+            suffixes=("", "_company"),
         )
 
         self.data = df
@@ -173,70 +103,41 @@ class RatioEngine:
 
             # ---------- Profitability ----------
 
-            npm = net_profit_margin(
-                row["net_profit"],
-                row["sales"]
-            )
+            npm = net_profit_margin(row["net_profit"], row["sales"])
 
-            opm = operating_profit_margin(
-                row["operating_profit"],
-                row["sales"]
-            )
+            opm = operating_profit_margin(row["operating_profit"], row["sales"])
 
             roe = return_on_equity(
-                row["net_profit"],
-                row["equity_capital"],
-                row["reserves"]
+                row["net_profit"], row["equity_capital"], row["reserves"]
             )
 
-            roce = return_on_capital_employed(
-                row["operating_profit"],
-                row["equity_capital"],
-                row["reserves"],
-                row["borrowings"],
-                row["broad_sector"]
-            )
-
-            roa = return_on_assets(
-                row["net_profit"],
-                row["total_assets"]
-            )
+            roa = return_on_assets(row["net_profit"], row["total_assets"])
 
             # ---------- Leverage ----------
 
             de = debt_to_equity(
-                row["borrowings"],
-                row["equity_capital"],
-                row["reserves"]
+                row["borrowings"], row["equity_capital"], row["reserves"]
             )
 
             icr = interest_coverage(
-                row["operating_profit"],
-                row["other_income"],
-                row["interest"]
+                row["operating_profit"], row["other_income"], row["interest"]
             )
 
-            turnover = asset_turnover(
-                row["sales"],
-                row["total_assets"]
-            )
+            turnover = asset_turnover(row["sales"], row["total_assets"])
 
             # ---------- Cash Flow ----------
 
-            fcf = free_cash_flow(
-                row["operating_activity"],
-                row["investing_activity"]
-            )
+            fcf = free_cash_flow(row["operating_activity"], row["investing_activity"])
 
             # ---------- CAGR ----------
             previous5 = self.data[
-                (self.data["company_id"] == row["company_id"]) &
-                (self.data["year"] == row["year"] - 5)
+                (self.data["company_id"] == row["company_id"])
+                & (self.data["year"] == row["year"] - 5)
             ]
 
             previous3 = self.data[
-                (self.data["company_id"] == row["company_id"]) &
-                (self.data["year"] == row["year"] - 3)
+                (self.data["company_id"] == row["company_id"])
+                & (self.data["year"] == row["year"] - 3)
             ]
 
             revenue5 = None
@@ -248,33 +149,17 @@ class RatioEngine:
 
                 prev = previous5.iloc[0]
 
-                revenue5, _ = revenue_cagr(
-                    prev["sales"],
-                    row["sales"],
-                    5
-                )
+                revenue5, _ = revenue_cagr(prev["sales"], row["sales"], 5)
 
-                pat5, _ = pat_cagr(
-                    prev["net_profit"],
-                    row["net_profit"],
-                    5
-                )
+                pat5, _ = pat_cagr(prev["net_profit"], row["net_profit"], 5)
 
-                eps5, _ = eps_cagr(
-                    prev["eps"],
-                    row["eps"],
-                    5
-                )
+                eps5, _ = eps_cagr(prev["eps"], row["eps"], 5)
 
             if not previous3.empty:
 
                 prev3 = previous3.iloc[0]
 
-                revenue3, _ = revenue_cagr(
-                    prev3["sales"],
-                    row["sales"],
-                    3
-                )
+                revenue3, _ = revenue_cagr(prev3["sales"], row["sales"], 3)
 
             # ---------- Composite Quality ----------
 
@@ -292,49 +177,30 @@ class RatioEngine:
             if roa is not None and roa > 5:
                 score += 25
 
-            records.append({
-
-                "company_id": row["company_id"],
-
-                "year": row["year"],
-
-                "net_profit_margin_pct": npm,
-
-                "operating_profit_margin_pct": opm,
-
-                "return_on_equity_pct": roe,
-
-                "debt_to_equity": de,
-
-                "interest_coverage": icr,
-
-                "asset_turnover": turnover,
-
-                "free_cash_flow_cr": fcf,
-
-                "capex_cr": abs(row["investing_activity"]),
-
-                "earnings_per_share": row["eps"],
-
-                "book_value_per_share": row["book_value"],
-
-                "dividend_payout_ratio_pct": row["dividend_payout"],
-
-                "total_debt_cr": row["borrowings"],
-
-                "cash_from_operations_cr": row["operating_activity"],
-
-                "revenue_cagr_3yr": revenue3,
-                
-                "revenue_cagr_5yr": revenue5,
-
-                "pat_cagr_5yr": pat5,
-
-                "eps_cagr_5yr": eps5,
-
-                "composite_quality_score": score
-
-            })
+            records.append(
+                {
+                    "company_id": row["company_id"],
+                    "year": row["year"],
+                    "net_profit_margin_pct": npm,
+                    "operating_profit_margin_pct": opm,
+                    "return_on_equity_pct": roe,
+                    "debt_to_equity": de,
+                    "interest_coverage": icr,
+                    "asset_turnover": turnover,
+                    "free_cash_flow_cr": fcf,
+                    "capex_cr": abs(row["investing_activity"]),
+                    "earnings_per_share": row["eps"],
+                    "book_value_per_share": row["book_value"],
+                    "dividend_payout_ratio_pct": row["dividend_payout"],
+                    "total_debt_cr": row["borrowings"],
+                    "cash_from_operations_cr": row["operating_activity"],
+                    "revenue_cagr_3yr": revenue3,
+                    "revenue_cagr_5yr": revenue5,
+                    "pat_cagr_5yr": pat5,
+                    "eps_cagr_5yr": eps5,
+                    "composite_quality_score": score,
+                }
+            )
 
         self.output = pd.DataFrame(records)
 
@@ -357,10 +223,7 @@ class RatioEngine:
 
         # Write new ratios
         self.output.to_sql(
-            "financial_ratios",
-            self.conn,
-            if_exists="append",
-            index=False
+            "financial_ratios", self.conn, if_exists="append", index=False
         )
 
         self.conn.commit()
@@ -375,9 +238,7 @@ class RatioEngine:
 
         cursor = self.conn.cursor()
 
-        cursor.execute(
-            "SELECT COUNT(*) FROM financial_ratios"
-        )
+        cursor.execute("SELECT COUNT(*) FROM financial_ratios")
 
         total = cursor.fetchone()[0]
 
@@ -388,7 +249,7 @@ class RatioEngine:
             print("PASS : Expected row count achieved")
         else:
             print(f"WARNING : Expected {EXPECTED_ROWS}, Found {total}")
-        
+
         cursor.execute("""
             SELECT COUNT(*)
             FROM financial_ratios

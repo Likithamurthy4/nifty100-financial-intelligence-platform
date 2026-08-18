@@ -5,7 +5,7 @@ engine = ScreenerEngine()
 
 results = {}
 
-for preset in engine.config.keys():
+for preset in engine.config:
 
     results[preset] = engine.apply_filters(preset)
 

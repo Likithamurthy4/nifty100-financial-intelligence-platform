@@ -30,11 +30,7 @@ class CompositeScore:
         roce = self.normalize(df["roce_percentage"])
         npm = self.normalize(df["net_profit_margin_pct"])
 
-        profitability = (
-            roe * 0.15 +
-            roce * 0.10 +
-            npm * 0.10
-        )
+        profitability = roe * 0.15 + roce * 0.10 + npm * 0.10
 
         # ---------- Cash Quality ----------
         fcf = self.normalize(df["free_cash_flow_cr"])
@@ -43,35 +39,22 @@ class CompositeScore:
 
         fcf_positive = (df["free_cash_flow_cr"] > 0).astype(int) * 100
 
-        cash_quality = (
-            fcf * 0.15 +
-            cfo_pat * 0.10 +
-            fcf_positive * 0.05
-        )
+        cash_quality = fcf * 0.15 + cfo_pat * 0.10 + fcf_positive * 0.05
 
         # ---------- Growth ----------
         revenue = self.normalize(df["revenue_cagr_5yr"])
         pat = self.normalize(df["pat_cagr_5yr"])
 
-        growth = (
-            revenue * 0.10 +
-            pat * 0.10
-        )
+        growth = revenue * 0.10 + pat * 0.10
 
         # ---------- Leverage ----------
         debt = self.normalize(df["debt_to_equity"], inverse=True)
         icr = self.normalize(df["interest_coverage"])
 
-        leverage = (
-            debt * 0.10 +
-            icr * 0.05
-        )
+        leverage = debt * 0.10 + icr * 0.05
 
         df["composite_quality_score"] = (
-            profitability +
-            cash_quality +
-            growth +
-            leverage
+            profitability + cash_quality + growth + leverage
         ).round(2)
 
         return df

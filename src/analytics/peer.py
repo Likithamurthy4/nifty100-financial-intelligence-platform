@@ -1,4 +1,5 @@
 import sqlite3
+
 import pandas as pd
 
 DATABASE = "db/nifty100.db"
@@ -42,10 +43,10 @@ class PeerAnalytics:
         """
 
         return pd.read_sql(query, self.conn)
+
     def compute_percentiles(self, df):
 
         metrics = [
-
             "return_on_equity_pct",
             "roce_percentage",
             "net_profit_margin_pct",
@@ -55,8 +56,7 @@ class PeerAnalytics:
             "revenue_cagr_5yr",
             "eps_cagr_5yr",
             "interest_coverage",
-            "asset_turnover"
-
+            "asset_turnover",
         ]
         if df["peer_group_name"].isna().all():
             print("No peer group assigned.")
@@ -72,34 +72,24 @@ class PeerAnalytics:
                 if metric == "debt_to_equity":
                     rank = 1 - rank
 
-                temp = pd.DataFrame({
-
-                    "company_id": group["company_id"],
-                    "peer_group_name": peer_name,
-                    "metric": metric,
-                    "value": group[metric],
-                    "percentile_rank": (rank * 100).round(2),
-                    "year": group["year"]
-
-                })
+                temp = pd.DataFrame(
+                    {
+                        "company_id": group["company_id"],
+                        "peer_group_name": peer_name,
+                        "metric": metric,
+                        "value": group[metric],
+                        "percentile_rank": (rank * 100).round(2),
+                        "year": group["year"],
+                    }
+                )
 
                 output.append(temp)
 
         return pd.concat(output, ignore_index=True)
-    
+
     def save(self, df):
 
-        df.to_sql(
-
-            "peer_percentiles",
-
-            self.conn,
-
-            if_exists="replace",
-
-            index=False
-
-        )
+        df.to_sql("peer_percentiles", self.conn, if_exists="replace", index=False)
 
         print("peer_percentiles table updated.")
 

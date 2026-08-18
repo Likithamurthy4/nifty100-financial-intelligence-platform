@@ -1,6 +1,5 @@
 import sqlite3
 from pathlib import Path
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -18,13 +17,13 @@ def get_db_connection():
 
 @router.get("/screener")
 def screen_companies(
-    min_roe: Optional[float] = Query(None),
-    max_de: Optional[float] = Query(None),
-    min_fcf: Optional[float] = Query(None),
-    sector: Optional[str] = Query(None),
-    min_rev_cagr_5yr: Optional[float] = Query(None),
-    min_pat_cagr_5yr: Optional[float] = Query(None),
-    max_pe: Optional[float] = Query(None),
+    min_roe: float | None = Query(None),
+    max_de: float | None = Query(None),
+    min_fcf: float | None = Query(None),
+    sector: str | None = Query(None),
+    min_rev_cagr_5yr: float | None = Query(None),
+    min_pat_cagr_5yr: float | None = Query(None),
+    max_pe: float | None = Query(None),
 ):
     """
     Screen companies using latest financial ratios

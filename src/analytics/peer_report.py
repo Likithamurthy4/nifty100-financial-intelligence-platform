@@ -1,10 +1,9 @@
 import os
 import sqlite3
+
 import pandas as pd
-
 from openpyxl import Workbook
-from openpyxl.styles import PatternFill, Font, Alignment
-
+from openpyxl.styles import Alignment, Font, PatternFill
 
 DATABASE = "db/nifty100.db"
 
@@ -15,25 +14,13 @@ class PeerReport:
 
         self.conn = sqlite3.connect(DATABASE)
 
-        self.green = PatternFill(
-            fill_type="solid",
-            start_color="92D050"
-        )
+        self.green = PatternFill(fill_type="solid", start_color="92D050")
 
-        self.yellow = PatternFill(
-            fill_type="solid",
-            start_color="FFD966"
-        )
+        self.yellow = PatternFill(fill_type="solid", start_color="FFD966")
 
-        self.red = PatternFill(
-            fill_type="solid",
-            start_color="FF9999"
-        )
+        self.red = PatternFill(fill_type="solid", start_color="FF9999")
 
-        self.gold = PatternFill(
-            fill_type="solid",
-            start_color="FFC000"
-        )
+        self.gold = PatternFill(fill_type="solid", start_color="FFC000")
 
         self.bold = Font(bold=True)
 
@@ -109,81 +96,51 @@ class PeerReport:
 
     def create_workbook(self, df):
 
-        os.makedirs(
-            "output",
-            exist_ok=True
-        )
+        os.makedirs("output", exist_ok=True)
 
         wb = Workbook()
 
         wb.remove(wb.active)
 
-        peer_groups = sorted(
+        peer_groups = sorted(df["peer_group_name"].dropna().unique())
 
-            df["peer_group_name"]
-            .dropna()
-            .unique()
-
-        )
-
-        print(
-            f"Peer Groups Found : {len(peer_groups)}"
-        )
+        print(f"Peer Groups Found : {len(peer_groups)}")
 
         for group in peer_groups:
 
-            ws = wb.create_sheet(
+            ws = wb.create_sheet(title=group[:31])
 
-                title=group[:31]
-
-            )
-
-            group_df = df[
-                df["peer_group_name"] == group
-            ].copy()
+            group_df = df[df["peer_group_name"] == group].copy()
 
             group_df = group_df.sort_values(
-
-                by="composite_quality_score",
-
-                ascending=False
-
+                by="composite_quality_score", ascending=False
             )
 
             headers = [
-
                 "company_id",
                 "company_name",
                 "year",
-
                 "return_on_equity_pct",
                 "roce_percentage",
                 "net_profit_margin_pct",
                 "operating_profit_margin_pct",
-
                 "debt_to_equity",
                 "interest_coverage",
                 "asset_turnover",
-
                 "free_cash_flow_cr",
                 "capex_cr",
                 "cash_from_operations_cr",
                 "total_debt_cr",
-
                 "earnings_per_share",
                 "book_value_per_share",
                 "dividend_payout_ratio_pct",
-
                 "revenue_cagr_3yr",
                 "revenue_cagr_5yr",
                 "pat_cagr_5yr",
                 "eps_cagr_5yr",
-
                 "composite_quality_score",
-
                 "metric",
-                "percentile_rank"
-
+                "percentile_rank",
             ]
 
             ws.append(headers)
@@ -192,9 +149,7 @@ class PeerReport:
 
                 cell.font = self.bold
 
-                cell.alignment = Alignment(
-                    horizontal="center"
-                )
+                cell.alignment = Alignment(horizontal="center")
 
             for row in group_df[headers].itertuples(index=False):
 
@@ -205,16 +160,11 @@ class PeerReport:
 
             if "percentile_rank" in headers:
 
-                percentile_col = (
-                    headers.index("percentile_rank") + 1
-                )
+                percentile_col = headers.index("percentile_rank") + 1
 
                 for row in range(2, ws.max_row + 1):
 
-                    value = ws.cell(
-                        row=row,
-                        column=percentile_col
-                    ).value
+                    value = ws.cell(row=row, column=percentile_col).value
 
                     if value is None:
                         continue
@@ -223,30 +173,21 @@ class PeerReport:
 
                         value = float(value)
 
-                    except:
+                    except (TypeError, ValueError):
 
                         continue
 
                     if value >= 75:
 
-                        ws.cell(
-                            row=row,
-                            column=percentile_col
-                        ).fill = self.green
+                        ws.cell(row=row, column=percentile_col).fill = self.green
 
                     elif value <= 25:
 
-                        ws.cell(
-                            row=row,
-                            column=percentile_col
-                        ).fill = self.red
+                        ws.cell(row=row, column=percentile_col).fill = self.red
 
                     else:
 
-                        ws.cell(
-                            row=row,
-                            column=percentile_col
-                        ).fill = self.yellow
+                        ws.cell(row=row, column=percentile_col).fill = self.yellow
 
             ####################################################
             # Benchmark Row
@@ -264,9 +205,7 @@ class PeerReport:
             # Median Row
             ####################################################
 
-            numeric_columns = group_df.select_dtypes(
-                include="number"
-            ).columns
+            numeric_columns = group_df.select_dtypes(include="number").columns
 
             median_row = []
 
@@ -278,9 +217,7 @@ class PeerReport:
 
                 elif col in numeric_columns:
 
-                    median_row.append(
-                        round(group_df[col].median(), 2)
-                    )
+                    median_row.append(round(group_df[col].median(), 2))
 
                 else:
 
@@ -301,30 +238,21 @@ class PeerReport:
             for column_cells in ws.columns:
 
                 length = max(
-
-                    len(str(cell.value))
-                    if cell.value is not None
-                    else 0
-
+                    len(str(cell.value)) if cell.value is not None else 0
                     for cell in column_cells
-
                 )
 
-                ws.column_dimensions[
-                    column_cells[0].column_letter
-                ].width = min(length + 3, 35)
+                ws.column_dimensions[column_cells[0].column_letter].width = min(
+                    length + 3, 35
+                )
 
         ####################################################
         # Save Workbook
         ####################################################
 
-        wb.save(
-            "output/peer_comparison.xlsx"
-        )
+        wb.save("output/peer_comparison.xlsx")
 
-        print(
-            "\npeer_comparison.xlsx created successfully."
-        )
+        print("\npeer_comparison.xlsx created successfully.")
 
     ###########################################################
 

@@ -1,18 +1,12 @@
 import streamlit as st
-
-from utils.db import (
-    search_company,
-    get_reports
-)
+from utils.db import get_reports, search_company
 
 
 def show():
 
     st.title("📄 Annual Reports")
 
-    keyword = st.text_input(
-        "Search Company"
-    )
+    keyword = st.text_input("Search Company")
 
     if keyword == "":
         st.info("Search a company.")
@@ -26,17 +20,9 @@ def show():
 
         return
 
-    company = st.selectbox(
+    company = st.selectbox("Select Company", companies["company_name"])
 
-        "Select Company",
-
-        companies["company_name"]
-
-    )
-
-    company_id = companies[
-        companies["company_name"] == company
-    ]["id"].iloc[0]
+    company_id = companies[companies["company_name"] == company]["id"].iloc[0]
 
     reports = get_reports(company_id)
 
@@ -50,19 +36,13 @@ def show():
 
     for _, row in reports.iterrows():
 
-        c1, c2 = st.columns([1,4])
+        c1, c2 = st.columns([1, 4])
 
         c1.write(row["year"])
 
         if row["annual_report"]:
 
-            c2.link_button(
-
-                "📥 Open Report",
-
-                row["annual_report"]
-
-            )
+            c2.link_button("📥 Open Report", row["annual_report"])
 
         else:
 

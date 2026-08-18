@@ -1,11 +1,10 @@
-import sqlite3
 import logging
+import sqlite3
 import time
 from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-
 
 # ============================================================
 # CONFIGURATION
@@ -33,6 +32,7 @@ logger = logging.getLogger("nifty100-api")
 # ============================================================
 # DATABASE CONNECTION
 # ============================================================
+
 
 def get_db_connection():
     connection = sqlite3.connect(DB_PATH)
@@ -68,6 +68,7 @@ app.add_middleware(
 # REQUEST LOGGING
 # ============================================================
 
+
 @app.middleware("http")
 async def request_logging_middleware(request: Request, call_next):
     start_time = time.time()
@@ -89,6 +90,7 @@ async def request_logging_middleware(request: Request, call_next):
 # ============================================================
 # HEALTH CHECK
 # ============================================================
+
 
 @app.get("/api/v1/health")
 def health_check():
@@ -112,9 +114,7 @@ def health_check():
 
     try:
         for table in tables:
-            cursor = connection.execute(
-                f"SELECT COUNT(*) FROM {table}"
-            )
+            cursor = connection.execute(f"SELECT COUNT(*) FROM {table}")
 
             db_row_counts[table] = cursor.fetchone()[0]
 
@@ -135,15 +135,16 @@ def health_check():
 # ROUTERS
 # ============================================================
 
-from src.api.routers import companies
-from src.api.routers import screener
-from src.api.routers import sectors
-from src.api.routers import peers
-from src.api.routers import valuation
-from src.api.routers import portfolio
-from src.api.routers import documents
-from src.api.routers import health
-
+from src.api.routers import (
+    companies,
+    documents,
+    health,
+    peers,
+    portfolio,
+    screener,
+    sectors,
+    valuation,
+)
 
 app.include_router(companies.router, prefix="/api/v1")
 app.include_router(screener.router, prefix="/api/v1")

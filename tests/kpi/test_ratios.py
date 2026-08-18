@@ -1,20 +1,19 @@
 import pandas as pd
 import pytest
 
+from src.analytics.cagr import calculate_cagr
+from src.analytics.cashflow_kpis import CashFlowIntelligence
 from src.analytics.ratios import (
+    asset_turnover,
+    debt_to_equity,
+    high_leverage_flag,
+    icr_warning,
+    interest_coverage,
+    net_debt,
     net_profit_margin,
     operating_profit_margin,
     return_on_equity,
-    debt_to_equity,
-    high_leverage_flag,
-    interest_coverage,
-    icr_warning,
-    net_debt,
-    asset_turnover,
 )
-
-from src.analytics.cagr import calculate_cagr
-from src.analytics.cashflow_kpis import CashFlowIntelligence
 
 
 def test_net_profit_margin():

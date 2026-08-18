@@ -1,14 +1,11 @@
 import os
+
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 
-GREEN = PatternFill(start_color="C6EFCE",
-                    end_color="C6EFCE",
-                    fill_type="solid")
+GREEN = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
 
-RED = PatternFill(start_color="FFC7CE",
-                  end_color="FFC7CE",
-                  fill_type="solid")
+RED = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
 
 
 class ScreenerExporter:
@@ -16,42 +13,34 @@ class ScreenerExporter:
     def __init__(self):
         self.workbook = Workbook()
         self.workbook.remove(self.workbook.active)
+
     def apply_colours(self, ws, columns, preset_name):
 
         rules = {
-
             "quality_compounder": {
                 "return_on_equity_pct": (15, ">="),
                 "debt_to_equity": (1, "<="),
                 "free_cash_flow_cr": (0, ">="),
-                "revenue_cagr_5yr": (10, ">=")
+                "revenue_cagr_5yr": (10, ">="),
             },
-
             "value_pick": {
                 "pe_ratio": (20, "<="),
                 "pb_ratio": (3, "<="),
-                "dividend_yield_pct": (1, ">=")
+                "dividend_yield_pct": (1, ">="),
             },
-
             "growth_accelerator": {
                 "revenue_cagr_5yr": (15, ">="),
-                "pat_cagr_5yr": (20, ">=")
+                "pat_cagr_5yr": (20, ">="),
             },
-
             "dividend_champion": {
                 "dividend_yield_pct": (4, ">="),
-                "return_on_equity_pct": (18, ">=")
+                "return_on_equity_pct": (18, ">="),
             },
-
-            "debt_free_blue_chip": {
-                "debt_to_equity": (0, "<=")
-            },
-
+            "debt_free_blue_chip": {"debt_to_equity": (0, "<=")},
             "turnaround_watch": {
                 "revenue_cagr_5yr": (20, ">="),
-                "free_cash_flow_cr": (100, ">=")
-            }
-
+                "free_cash_flow_cr": (100, ">="),
+            },
         }
 
         if preset_name not in rules:
@@ -85,6 +74,7 @@ class ScreenerExporter:
                     cell.fill = GREEN
                 else:
                     cell.fill = RED
+
     def export(self, results):
 
         for preset_name, df in results.items():
@@ -112,7 +102,7 @@ class ScreenerExporter:
                 "market_cap_crore",
                 "pe_ratio",
                 "pb_ratio",
-                "composite_quality_score"
+                "composite_quality_score",
             ]
 
             df = df[columns]

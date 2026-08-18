@@ -1,8 +1,9 @@
+import os
 import sqlite3
-import pandas as pd
+
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+import pandas as pd
 
 DATABASE = "db/nifty100.db"
 
@@ -39,10 +40,10 @@ class RadarChart:
         """
 
         return pd.read_sql(query, self.conn)
+
     def create_charts(self, df):
 
         metrics = [
-
             "return_on_equity_pct",
             "roce_percentage",
             "net_profit_margin_pct",
@@ -50,8 +51,7 @@ class RadarChart:
             "free_cash_flow_cr",
             "pat_cagr_5yr",
             "revenue_cagr_5yr",
-            "composite_quality_score"
-
+            "composite_quality_score",
         ]
 
         os.makedirs("reports/radar_charts", exist_ok=True)
@@ -79,13 +79,10 @@ class RadarChart:
                 .replace(">", "")
                 .replace("|", "")
             )
-        
+
             peer = company_df["peer_group_name"].iloc[0]
 
-            peer_avg = (
-                df[df.peer_group_name == peer][metrics]
-                .mean()
-            )
+            peer_avg = df[df.peer_group_name == peer][metrics].mean()
 
             values = company_df.iloc[0][metrics].tolist()
             averages = peer_avg.tolist()
@@ -98,18 +95,18 @@ class RadarChart:
                 "FCF",
                 "PAT CAGR",
                 "Revenue CAGR",
-                "Composite"
+                "Composite",
             ]
 
             N = len(labels)
 
-            angles = np.linspace(0, 2*np.pi, N, endpoint=False).tolist()
+            angles = np.linspace(0, 2 * np.pi, N, endpoint=False).tolist()
 
             values += values[:1]
             averages += averages[:1]
             angles += angles[:1]
 
-            plt.figure(figsize=(7,7))
+            plt.figure(figsize=(7, 7))
 
             ax = plt.subplot(111, polar=True)
 
@@ -128,21 +125,22 @@ class RadarChart:
 
             safe_name = (
                 safe_name.replace("/", "-")
-                        .replace("\\", "-")
-                        .replace(":", "-")
-                        .replace("*", "")
-                        .replace("?", "")
-                        .replace('"', "")
-                        .replace("<", "")
-                        .replace(">", "")
-                        .replace("|", "")
+                .replace("\\", "-")
+                .replace(":", "-")
+                .replace("*", "")
+                .replace("?", "")
+                .replace('"', "")
+                .replace("<", "")
+                .replace(">", "")
+                .replace("|", "")
             )
 
             plt.savefig(f"reports/radar_charts/{safe_name}.png")
-           
+
             plt.close()
         print(repr(company))
         print(repr(safe_name))
         print("Radar charts created.")
+
     def close(self):
         self.conn.close()

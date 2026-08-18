@@ -6,6 +6,7 @@ financial datasets before loading into SQLite.
 """
 
 import re
+
 import pandas as pd
 
 
@@ -39,7 +40,7 @@ def normalize_year(year):
 
     year = str(year).strip()
 
-    match = re.search(r'(\d{2,4})', year)
+    match = re.search(r"(\d{2,4})", year)
 
     if not match:
         return None
@@ -69,11 +70,7 @@ def clean_column_names(df):
     """
 
     df.columns = (
-        df.columns
-        .str.strip()
-        .str.lower()
-        .str.replace(" ", "_")
-        .str.replace("-", "_")
+        df.columns.str.strip().str.lower().str.replace(" ", "_").str.replace("-", "_")
     )
 
     return df

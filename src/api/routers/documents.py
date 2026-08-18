@@ -68,9 +68,7 @@ def get_company_documents(ticker: str):
                         allow_redirects=True,
                     )
 
-                    is_url_valid = (
-                        response.status_code < 400
-                    )
+                    is_url_valid = response.status_code < 400
 
                 except requests.RequestException:
                     is_url_valid = False

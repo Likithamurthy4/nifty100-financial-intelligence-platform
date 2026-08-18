@@ -1,6 +1,4 @@
 import streamlit as st
-import pandas as pd
-
 from utils.db import get_screener_data
 
 
@@ -23,103 +21,62 @@ def show():
     df = get_screener_data()
 
     st.sidebar.header("Filters")
-    
-    roe = st.sidebar.slider(
-        "Minimum ROE",
-        0,
-        50,
-        15
-    )
 
-    debt = st.sidebar.slider(
-        "Maximum Debt/Equity",
-        0.0,
-        5.0,
-        1.0
-    )
+    roe = st.sidebar.slider("Minimum ROE", 0, 50, 15)
 
-    pe = st.sidebar.slider(
-        "Maximum P/E",
-        0,
-        100,
-        40
-    )
+    debt = st.sidebar.slider("Maximum Debt/Equity", 0.0, 5.0, 1.0)
 
-    revenue = st.sidebar.slider(
-        "Minimum Revenue CAGR",
-        -20,
-        50,
-        10
-    )
+    pe = st.sidebar.slider("Maximum P/E", 0, 100, 40)
+
+    revenue = st.sidebar.slider("Minimum Revenue CAGR", -20, 50, 10)
 
     df = df[
-        (df["return_on_equity_pct"] >= roe) &
-        (df["debt_to_equity"] <= debt) &
-        (df["pe_ratio"] <= pe) &
-        (df["revenue_cagr_5yr"] >= revenue)
+        (df["return_on_equity_pct"] >= roe)
+        & (df["debt_to_equity"] <= debt)
+        & (df["pe_ratio"] <= pe)
+        & (df["revenue_cagr_5yr"] >= revenue)
     ]
     if quality:
 
         df = get_screener_data()
 
-        df = df[
-            (df["return_on_equity_pct"] >= 15) &
-            (df["debt_to_equity"] <= 1)
-        ]
+        df = df[(df["return_on_equity_pct"] >= 15) & (df["debt_to_equity"] <= 1)]
 
     elif value:
 
         df = get_screener_data()
 
-        df = df[
-            (df["pe_ratio"] <= 30)
-        ]
+        df = df[(df["pe_ratio"] <= 30)]
 
     elif growth:
 
         df = get_screener_data()
 
-        df = df[
-            (df["revenue_cagr_5yr"] >= 15) &
-            (df["pat_cagr_5yr"] >= 15)
-        ]
+        df = df[(df["revenue_cagr_5yr"] >= 15) & (df["pat_cagr_5yr"] >= 15)]
 
     elif dividend:
 
         df = get_screener_data()
 
-        df = df[
-            df["dividend_yield_pct"] >= 2
-        ]
+        df = df[df["dividend_yield_pct"] >= 2]
 
     elif debtfree:
 
         df = get_screener_data()
 
-        df = df[
-            df["debt_to_equity"] <= 0.2
-        ]
+        df = df[df["debt_to_equity"] <= 0.2]
 
     elif turnaround:
 
         df = get_screener_data()
 
-        df = df[
-            (df["free_cash_flow_cr"] > 0) &
-            (df["net_profit_margin_pct"] > 0)
-        ]
+        df = df[(df["free_cash_flow_cr"] > 0) & (df["net_profit_margin_pct"] > 0)]
     st.write(df[["company_name", "pe_ratio", "pb_ratio"]].head(20))
     st.success(f"{len(df)} companies match your filters")
 
-    st.dataframe(
-        df,
-        use_container_width=True
-    )
+    st.dataframe(df, use_container_width=True)
     csv = df.to_csv(index=False).encode("utf-8")
 
     st.download_button(
-        "📥 Download CSV",
-        csv,
-        file_name="screener_results.csv",
-        mime="text/csv"
+        "📥 Download CSV", csv, file_name="screener_results.csv", mime="text/csv"
     )

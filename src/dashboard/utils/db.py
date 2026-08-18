@@ -1,4 +1,5 @@
 import sqlite3
+
 import pandas as pd
 import streamlit as st
 
@@ -20,24 +21,20 @@ def run_query(query):
 @st.cache_data(ttl=600)
 def get_companies():
 
-    return run_query(
-        """
+    return run_query("""
         SELECT *
         FROM companies
         ORDER BY company_name
-        """
-    )
+        """)
 
 
 @st.cache_data(ttl=600)
 def get_sectors():
 
-    return run_query(
-        """
+    return run_query("""
         SELECT *
         FROM sectors
-        """
-    )
+        """)
 
 
 @st.cache_data(ttl=600)
@@ -93,6 +90,7 @@ def get_peers(group_name):
         WHERE peer_group_name='{group_name}'
     """)
 
+
 @st.cache_data(ttl=600)
 def get_dashboard_data(year):
 
@@ -125,6 +123,8 @@ def get_dashboard_data(year):
 
         WHERE fr.year={year}
     """)
+
+
 @st.cache_data(ttl=600)
 def search_company(keyword):
 
@@ -173,6 +173,8 @@ def get_company_profile(company_id):
 
         WHERE c.id='{company_id}'
     """)
+
+
 @st.cache_data(ttl=600)
 def get_screener_data():
 
@@ -216,6 +218,8 @@ def get_screener_data():
             WHERE f2.company_id = fr.company_id
         )
     """)
+
+
 @st.cache_data(ttl=600)
 def get_peer_groups():
 
@@ -244,6 +248,8 @@ def get_peer_companies(group_name):
 
         ORDER BY c.company_name
     """)
+
+
 @st.cache_data(ttl=600)
 def get_peer_metrics(group_name):
 
@@ -278,6 +284,8 @@ def get_peer_metrics(group_name):
             WHERE f2.company_id = fr.company_id
         )
     """)
+
+
 @st.cache_data(ttl=600)
 def get_peer_table(group_name):
 
@@ -317,6 +325,8 @@ def get_peer_table(group_name):
 
         ORDER BY fr.composite_quality_score DESC
     """)
+
+
 @st.cache_data(ttl=600)
 def get_trend_data(company_id):
 
@@ -343,6 +353,8 @@ def get_trend_data(company_id):
 
         ORDER BY year
     """)
+
+
 @st.cache_data(ttl=600)
 def get_sector_data(sector):
 
@@ -391,6 +403,8 @@ def get_sector_data(sector):
         )
 
     """)
+
+
 @st.cache_data(ttl=600)
 def get_capital_allocation():
 
@@ -440,6 +454,8 @@ def get_capital_allocation():
         )
 
     """)
+
+
 @st.cache_data(ttl=600)
 def get_reports(company_id):
 

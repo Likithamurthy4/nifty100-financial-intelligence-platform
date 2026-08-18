@@ -7,6 +7,7 @@ Data Quality Validation Rules
 """
 
 from pathlib import Path
+
 import pandas as pd
 
 OUTPUT = Path("output")
@@ -23,7 +24,7 @@ def add_error(rule, dataset, row, severity, message):
             "Dataset": dataset,
             "Row": row,
             "Severity": severity,
-            "Message": message
+            "Message": message,
         }
     )
 
@@ -32,6 +33,7 @@ def add_error(rule, dataset, row, severity, message):
 # DQ-01
 # Primary Key uniqueness
 ####################################################
+
 
 def dq01_primary_key(df, dataset):
 
@@ -42,19 +44,14 @@ def dq01_primary_key(df, dataset):
 
     for index in duplicate.index:
 
-        add_error(
-            "DQ-01",
-            dataset,
-            index,
-            "CRITICAL",
-            "Duplicate Primary Key"
-        )
+        add_error("DQ-01", dataset, index, "CRITICAL", "Duplicate Primary Key")
 
 
 ####################################################
 # DQ-02
 # company_id + year uniqueness
 ####################################################
+
 
 def dq02_company_year(df, dataset):
 
@@ -64,28 +61,18 @@ def dq02_company_year(df, dataset):
     if "year" not in df.columns:
         return
 
-    duplicate = df[
-        df.duplicated(
-            ["company_id", "year"],
-            keep=False
-        )
-    ]
+    duplicate = df[df.duplicated(["company_id", "year"], keep=False)]
 
     for index in duplicate.index:
 
-        add_error(
-            "DQ-02",
-            dataset,
-            index,
-            "CRITICAL",
-            "Duplicate Company-Year"
-        )
+        add_error("DQ-02", dataset, index, "CRITICAL", "Duplicate Company-Year")
 
 
 ####################################################
 # DQ-03
 # Foreign Key validation
 ####################################################
+
 
 def dq03_foreign_key(df, companies, dataset):
 
@@ -94,19 +81,11 @@ def dq03_foreign_key(df, companies, dataset):
 
     valid = set(companies["id"])
 
-    invalid = df[
-        ~df["company_id"].isin(valid)
-    ]
+    invalid = df[~df["company_id"].isin(valid)]
 
     for index in invalid.index:
 
-        add_error(
-            "DQ-03",
-            dataset,
-            index,
-            "CRITICAL",
-            "Invalid company_id"
-        )
+        add_error("DQ-03", dataset, index, "CRITICAL", "Invalid company_id")
 
 
 ####################################################
@@ -114,42 +93,22 @@ def dq03_foreign_key(df, companies, dataset):
 # Balance Sheet equation
 ####################################################
 
+
 def dq04_balance_sheet(df):
 
-    required = [
-
-        "total_assets",
-        "total_liabilities"
-
-    ]
+    required = ["total_assets", "total_liabilities"]
 
     if not all(c in df.columns for c in required):
         return
 
-    difference = abs(
-
-        df["total_assets"]
-        -
-        df["total_liabilities"]
-
-    )
+    difference = abs(df["total_assets"] - df["total_liabilities"])
 
     invalid = df[difference > 1]
 
     for index in invalid.index:
 
         add_error(
-
-            "DQ-04",
-
-            "balancesheet",
-
-            index,
-
-            "WARNING",
-
-            "Assets and Liabilities mismatch"
-
+            "DQ-04", "balancesheet", index, "WARNING", "Assets and Liabilities mismatch"
         )
 
 
@@ -158,64 +117,32 @@ def dq04_balance_sheet(df):
 # Operating Profit %
 ####################################################
 
+
 def dq05_opm(df):
 
-    required = [
-
-        "sales",
-        "operating_profit",
-        "opm_percentage"
-
-    ]
+    required = ["sales", "operating_profit", "opm_percentage"]
 
     if not all(c in df.columns for c in required):
         return
 
     valid = df[df["sales"] > 0]
 
-    expected = (
+    expected = (valid["operating_profit"] / valid["sales"]) * 100
 
-        valid["operating_profit"]
-
-        /
-
-        valid["sales"]
-
-    ) * 100
-
-    difference = abs(
-
-        expected
-
-        -
-
-        valid["opm_percentage"]
-
-    )
+    difference = abs(expected - valid["opm_percentage"])
 
     invalid = valid[difference > 2]
 
     for index in invalid.index:
 
-        add_error(
-
-            "DQ-05",
-
-            "profitandloss",
-
-            index,
-
-            "WARNING",
-
-            "Incorrect OPM %"
-
-        )
+        add_error("DQ-05", "profitandloss", index, "WARNING", "Incorrect OPM %")
 
 
 ####################################################
 # DQ-06
 # Positive Sales
 ####################################################
+
 
 def dq06_sales(df):
 
@@ -226,19 +153,7 @@ def dq06_sales(df):
 
     for index in invalid.index:
 
-        add_error(
-
-            "DQ-06",
-
-            "profitandloss",
-
-            index,
-
-            "WARNING",
-
-            "Sales must be positive"
-
-        )
+        add_error("DQ-06", "profitandloss", index, "WARNING", "Sales must be positive")
 
 
 ####################################################
@@ -246,94 +161,55 @@ def dq06_sales(df):
 # Net Cash Flow
 ####################################################
 
+
 def dq07_cashflow(df):
 
     required = [
-
         "operating_activity",
-
         "investing_activity",
-
         "financing_activity",
-
-        "net_cash_flow"
-
+        "net_cash_flow",
     ]
 
     if not all(c in df.columns for c in required):
         return
 
     expected = (
-
-        df["operating_activity"]
-
-        +
-
-        df["investing_activity"]
-
-        +
-
-        df["financing_activity"]
-
+        df["operating_activity"] + df["investing_activity"] + df["financing_activity"]
     )
 
-    difference = abs(
-
-        expected
-
-        -
-
-        df["net_cash_flow"]
-
-    )
+    difference = abs(expected - df["net_cash_flow"])
 
     invalid = df[difference > 2]
 
     for index in invalid.index:
 
-        add_error(
+        add_error("DQ-07", "cashflow", index, "WARNING", "Net Cash Flow mismatch")
 
-            "DQ-07",
 
-            "cashflow",
-
-            index,
-
-            "WARNING",
-
-            "Net Cash Flow mismatch"
-
-        )
 ####################################################
 # DQ-08
 # Tax Percentage
 ####################################################
+
 
 def dq08_tax(df):
 
     if "tax_percentage" not in df.columns:
         return
 
-    invalid = df[
-        (df["tax_percentage"] < 0) |
-        (df["tax_percentage"] > 100)
-    ]
+    invalid = df[(df["tax_percentage"] < 0) | (df["tax_percentage"] > 100)]
 
     for index in invalid.index:
 
-        add_error(
-            "DQ-08",
-            "profitandloss",
-            index,
-            "WARNING",
-            "Invalid Tax Percentage"
-        )
+        add_error("DQ-08", "profitandloss", index, "WARNING", "Invalid Tax Percentage")
 
 
 ####################################################
 # DQ-09
 # Dividend Payout
 ####################################################
+
 
 def dq09_dividend(df):
 
@@ -345,11 +221,7 @@ def dq09_dividend(df):
     for index in invalid.index:
 
         add_error(
-            "DQ-09",
-            "profitandloss",
-            index,
-            "WARNING",
-            "Negative Dividend Payout"
+            "DQ-09", "profitandloss", index, "WARNING", "Negative Dividend Payout"
         )
 
 
@@ -358,6 +230,7 @@ def dq09_dividend(df):
 # EPS Validation
 ####################################################
 
+
 def dq10_eps(df):
 
     required = ["eps", "net_profit"]
@@ -365,10 +238,7 @@ def dq10_eps(df):
     if not all(col in df.columns for col in required):
         return
 
-    invalid = df[
-        (df["net_profit"] > 0) &
-        (df["eps"] <= 0)
-    ]
+    invalid = df[(df["net_profit"] > 0) & (df["eps"] <= 0)]
 
     for index in invalid.index:
 
@@ -377,7 +247,7 @@ def dq10_eps(df):
             "profitandloss",
             index,
             "WARNING",
-            "EPS inconsistent with Net Profit"
+            "EPS inconsistent with Net Profit",
         )
 
 
@@ -386,31 +256,24 @@ def dq10_eps(df):
 # Annual Report
 ####################################################
 
+
 def dq11_document(df):
 
     if "Annual_Report" not in df.columns:
         return
 
-    invalid = df[
-        df["Annual_Report"].isna() |
-        (df["Annual_Report"] == "")
-    ]
+    invalid = df[df["Annual_Report"].isna() | (df["Annual_Report"] == "")]
 
     for index in invalid.index:
 
-        add_error(
-            "DQ-11",
-            "documents",
-            index,
-            "WARNING",
-            "Missing Annual Report"
-        )
+        add_error("DQ-11", "documents", index, "WARNING", "Missing Annual Report")
 
 
 ####################################################
 # DQ-12
 # Market Cap
 ####################################################
+
 
 def dq12_market_cap(df):
 
@@ -421,19 +284,14 @@ def dq12_market_cap(df):
 
     for index in invalid.index:
 
-        add_error(
-            "DQ-12",
-            "market_cap",
-            index,
-            "WARNING",
-            "Market Cap <= 0"
-        )
+        add_error("DQ-12", "market_cap", index, "WARNING", "Market Cap <= 0")
 
 
 ####################################################
 # DQ-13
 # Debt to Equity
 ####################################################
+
 
 def dq13_debt(df):
 
@@ -445,11 +303,7 @@ def dq13_debt(df):
     for index in invalid.index:
 
         add_error(
-            "DQ-13",
-            "financial_ratios",
-            index,
-            "WARNING",
-            "Negative Debt to Equity"
+            "DQ-13", "financial_ratios", index, "WARNING", "Negative Debt to Equity"
         )
 
 
@@ -458,11 +312,10 @@ def dq13_debt(df):
 # Missing Mandatory Values
 ####################################################
 
+
 def dq14_missing(df, dataset):
 
-    mandatory = [
-        "id"
-    ]
+    mandatory = ["id"]
 
     if "company_id" in df.columns:
         mandatory.append("company_id")
@@ -476,13 +329,7 @@ def dq14_missing(df, dataset):
 
         for index in invalid.index:
 
-            add_error(
-                "DQ-14",
-                dataset,
-                index,
-                "CRITICAL",
-                f"Missing {col}"
-            )
+            add_error("DQ-14", dataset, index, "CRITICAL", f"Missing {col}")
 
 
 ####################################################
@@ -490,17 +337,12 @@ def dq14_missing(df, dataset):
 # Empty Dataset
 ####################################################
 
+
 def dq15_empty(df, dataset):
 
     if df.empty:
 
-        add_error(
-            "DQ-15",
-            dataset,
-            "-",
-            "CRITICAL",
-            "Dataset is Empty"
-        )
+        add_error("DQ-15", dataset, "-", "CRITICAL", "Dataset is Empty")
 
 
 ####################################################
@@ -508,41 +350,31 @@ def dq15_empty(df, dataset):
 # Date Validation
 ####################################################
 
+
 def dq16_stock_date(df):
 
     if "date" not in df.columns:
         return
 
-    invalid = pd.to_datetime(
-        df["date"],
-        errors="coerce"
-    ).isna()
+    invalid = pd.to_datetime(df["date"], errors="coerce").isna()
 
     for index in df[invalid].index:
 
-        add_error(
-            "DQ-16",
-            "stock_prices",
-            index,
-            "WARNING",
-            "Invalid Date"
-        )
+        add_error("DQ-16", "stock_prices", index, "WARNING", "Invalid Date")
 
 
 ####################################################
 # Save Report
 ####################################################
 
+
 def save_validation_report():
 
     report = pd.DataFrame(validation_errors)
 
-    report.to_csv(
-        OUTPUT / "validation_failures.csv",
-        index=False
-    )
+    report.to_csv(OUTPUT / "validation_failures.csv", index=False)
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
 
     print("Validation Complete")
 
@@ -550,4 +382,4 @@ def save_validation_report():
 
     print("Saved : output/validation_failures.csv")
 
-    print("="*50)
+    print("=" * 50)

@@ -3,10 +3,7 @@ import sqlite3
 conn = sqlite3.connect("db/nifty100.db")
 cursor = conn.cursor()
 
-tables = [
-    "balancesheet",
-    "cashflow"
-]
+tables = ["balancesheet", "cashflow"]
 
 for table in tables:
 

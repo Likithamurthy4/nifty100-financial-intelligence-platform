@@ -1,19 +1,13 @@
-import streamlit as st
 import plotly.express as px
-
-from utils.db import (
-    search_company,
-    get_trend_data
-)
+import streamlit as st
+from utils.db import get_trend_data, run_query, search_company
 
 
 def show():
 
     st.title("📈 Trend Analysis")
 
-    keyword = st.text_input(
-        "Search Company"
-    )
+    keyword = st.text_input("Search Company")
 
     if keyword == "":
         st.info("Search a company.")
@@ -27,26 +21,15 @@ def show():
 
         return
 
-    company = st.selectbox(
+    company = st.selectbox("Company", companies["company_name"])
 
-        "Company",
-
-        companies["company_name"]
-
-    )
-
-    company_id = companies[
-        companies["company_name"] == company
-    ]["id"].iloc[0]
+    company_id = companies[companies["company_name"] == company]["id"].iloc[0]
 
     df = get_trend_data(company_id)
 
     metrics = st.multiselect(
-
         "Choose up to 3 Metrics",
-
         [
-
             "return_on_equity_pct",
             "net_profit_margin_pct",
             "debt_to_equity",
@@ -56,12 +39,9 @@ def show():
             "revenue_cagr_5yr",
             "pat_cagr_5yr",
             "eps_cagr_5yr",
-            "composite_quality_score"
-
+            "composite_quality_score",
         ],
-
-        default=["return_on_equity_pct"]
-
+        default=["return_on_equity_pct"],
     )
 
     if len(metrics) > 3:
@@ -70,25 +50,9 @@ def show():
 
         return
 
-    fig = px.line(
+    fig = px.line(df, x="year", y=metrics, markers=True)
 
-        df,
-
-        x="year",
-
-        y=metrics,
-
-        markers=True
-
-    )
-
-    st.plotly_chart(
-
-        fig,
-
-        use_container_width=True
-
-    )
+    st.plotly_chart(fig, use_container_width=True)
     st.divider()
 
     st.subheader("Year-over-Year Change (%)")
@@ -99,13 +63,9 @@ def show():
 
         yoy[metric] = yoy[metric].pct_change() * 100
 
-    st.dataframe(
+    st.dataframe(yoy[["year"] + metrics], use_container_width=True)
 
-        yoy[["year"] + metrics],
 
-        use_container_width=True
-
-    )
 @st.cache_data(ttl=600)
 def get_sector_data(sector):
 

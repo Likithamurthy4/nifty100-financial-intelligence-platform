@@ -19,6 +19,7 @@ def get_db_connection():
 # ALL SECTORS
 # ============================================================
 
+
 @router.get("/sectors")
 def get_sectors():
     """
@@ -208,20 +209,10 @@ def get_sectors():
                     "sector": sector,
                     "company_count": row["company_count"],
                     "median_roe": (
-                        round(median(roe_values), 2)
-                        if roe_values
-                        else None
+                        round(median(roe_values), 2) if roe_values else None
                     ),
-                    "median_pe": (
-                        round(median(pe_values), 2)
-                        if pe_values
-                        else None
-                    ),
-                    "median_de": (
-                        round(median(de_values), 2)
-                        if de_values
-                        else None
-                    ),
+                    "median_pe": (round(median(pe_values), 2) if pe_values else None),
+                    "median_de": (round(median(de_values), 2) if de_values else None),
                 }
             )
 
@@ -237,6 +228,7 @@ def get_sectors():
 # ============================================================
 # COMPANIES IN A SECTOR
 # ============================================================
+
 
 @router.get("/sectors/{sector}/companies")
 def get_sector_companies(sector: str):

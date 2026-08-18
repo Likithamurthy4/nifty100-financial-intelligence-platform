@@ -57,6 +57,7 @@ def make_pl(net_profit, sales=1000, years=None):
 # FCF
 # ============================================================
 
+
 def test_fcf():
     cashflow = make_cashflow(
         [500],
@@ -75,6 +76,7 @@ def test_fcf():
 # ============================================================
 # CFO QUALITY
 # ============================================================
+
 
 def test_quality_high(engine):
     cashflow = make_cashflow(
@@ -134,6 +136,7 @@ def test_quality_risk(engine):
 # CAPEX INTENSITY
 # ============================================================
 
+
 def test_capex(engine):
     cashflow = make_cashflow(
         [500],
@@ -159,6 +162,7 @@ def test_capex(engine):
 # FCF CONVERSION
 # ============================================================
 
+
 def test_fcf_conversion(engine):
     cashflow = make_cashflow(
         [500],
@@ -180,6 +184,7 @@ def test_fcf_conversion(engine):
 # CAPITAL ALLOCATION
 # ============================================================
 
+
 def test_classifier(engine):
     cashflow = make_cashflow(
         [100],
@@ -187,9 +192,7 @@ def test_classifier(engine):
         [20],
     )
 
-    assert engine.capital_allocation(
-        cashflow
-    ) == "Reinvestor"
+    assert engine.capital_allocation(cashflow) == "Reinvestor"
 
 
 def test_classifier_quality(engine):
@@ -201,6 +204,4 @@ def test_classifier_quality(engine):
 
     # Current implementation's capital_allocation()
     # does not accept a CFO quality argument.
-    assert engine.capital_allocation(
-        cashflow
-    ) == "Reinvestor"
+    assert engine.capital_allocation(cashflow) == "Reinvestor"

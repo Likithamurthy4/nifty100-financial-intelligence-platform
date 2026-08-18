@@ -41,11 +41,7 @@ def return_on_equity(net_profit, equity_capital, reserves):
 
 
 def return_on_capital_employed(
-    ebit,
-    equity_capital,
-    reserves,
-    borrowings,
-    broad_sector=""
+    ebit, equity_capital, reserves, borrowings, broad_sector=""
 ):
     """
     Return on Capital Employed (%)
@@ -70,6 +66,8 @@ def return_on_assets(net_profit, total_assets):
         return None
 
     return round((net_profit / total_assets) * 100, 2)
+
+
 """
 Day 09 - Leverage & Efficiency Ratios
 """
@@ -121,10 +119,7 @@ def interest_coverage(operating_profit, other_income, interest):
     if interest == 0:
         return None
 
-    return round(
-        (operating_profit + other_income) / interest,
-        2
-    )
+    return round((operating_profit + other_income) / interest, 2)
 
 
 def icr_label(icr):

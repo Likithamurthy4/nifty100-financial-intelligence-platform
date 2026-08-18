@@ -1,14 +1,10 @@
 import sqlite3
+
 import pandas as pd
 
 conn = sqlite3.connect("db/nifty100.db")
 
-tables = [
-    "profitandloss",
-    "balancesheet",
-    "cashflow",
-    "financial_ratios"
-]
+tables = ["profitandloss", "balancesheet", "cashflow", "financial_ratios"]
 
 for table in tables:
     print("\n" + "=" * 60)

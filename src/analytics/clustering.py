@@ -1,27 +1,33 @@
 """
-Day 37 - Cluster Profiling & Portfolio Statistics
+Day 36 - KMeans Financial Clustering
 
-Generates:
+Clusters all 92 companies into 5 financial archetypes using:
+    - Return on Equity (%)
+    - Debt to Equity
+    - Revenue CAGR (5Y)
+    - Free Cash Flow CAGR (5Y)
+    - Operating Profit Margin (%)
 
-1. Cluster profile statistics
-   - Mean and median of the 5 clustering features
-2. Correlation heatmap
-   - Pearson correlation of 10 latest-year KPIs
-3. Outlier report
-   - Sector-wise Z-score > 3
-4. Portfolio statistics
-   - P10, P25, P50, P75, P90, Mean, Std
+Missing values are imputed using broad-sector medians.
+
+Pipeline:
+    1. Start from all companies
+    2. Build features from available source data
+    3. Impute missing values using sector medians
+    4. StandardScaler
+    5. KMeans with 5 clusters, random_state=42
+    6. Generate elbow plot
+    7. Generate cluster_labels.csv
 """
 
-from pathlib import Path
 import sqlite3
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from scipy.stats import zscore
-
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 # ============================================================
 # PATHS
@@ -37,11 +43,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# ============================================================
-# CLUSTERING FEATURES
-# ============================================================
-
-CLUSTER_FEATURES = [
+FEATURES = [
     "return_on_equity_pct",
     "debt_to_equity",
     "revenue_cagr_5yr",
@@ -51,47 +53,28 @@ CLUSTER_FEATURES = [
 
 
 # ============================================================
-# 10 CORE KPIs
-# ============================================================
-
-CORE_KPIS = [
-    "net_profit_margin_pct",
-    "operating_profit_margin_pct",
-    "return_on_equity_pct",
-    "debt_to_equity",
-    "interest_coverage",
-    "asset_turnover",
-    "free_cash_flow_cr",
-    "revenue_cagr_5yr",
-    "pat_cagr_5yr",
-    "eps_cagr_5yr",
-]
-
-
-# ============================================================
 # DATABASE
 # ============================================================
 
-def load_data():
-    conn = sqlite3.connect(DB_PATH)
 
-    ratios = pd.read_sql_query(
+def get_connection():
+    """Return a SQLite connection to the project database."""
+    return sqlite3.connect(DB_PATH)
+
+
+def load_source_data():
+    """Load all source data required for clustering."""
+
+    conn = get_connection()
+
+    companies = pd.read_sql_query(
         """
         SELECT
-            company_id,
-            year,
-            net_profit_margin_pct,
-            operating_profit_margin_pct,
-            return_on_equity_pct,
-            debt_to_equity,
-            interest_coverage,
-            asset_turnover,
-            free_cash_flow_cr,
-            revenue_cagr_5yr,
-            pat_cagr_5yr,
-            eps_cagr_5yr
-        FROM financial_ratios
-        WHERE year IS NOT NULL
+            id AS company_id,
+            company_name,
+            roe_percentage,
+            roce_percentage
+        FROM companies
         """,
         conn,
     )
@@ -107,175 +90,302 @@ def load_data():
         conn,
     )
 
-    companies = pd.read_sql_query(
+    ratios = pd.read_sql_query(
         """
         SELECT
-            id AS company_id,
-            company_name,
-            roe_percentage,
-            roce_percentage
-        FROM companies
+            company_id,
+            year,
+            return_on_equity_pct,
+            debt_to_equity,
+            revenue_cagr_5yr,
+            operating_profit_margin_pct,
+            free_cash_flow_cr
+        FROM financial_ratios
         """,
         conn,
     )
 
-    clusters_path = OUTPUT_DIR / "cluster_labels.csv"
+    pnl = pd.read_sql_query(
+        """
+        SELECT
+            company_id,
+            year,
+            sales,
+            operating_profit
+        FROM profitandloss
+        WHERE year IS NOT NULL
+        """,
+        conn,
+    )
 
-    clusters = pd.read_csv(clusters_path)
+    balance = pd.read_sql_query(
+        """
+        SELECT
+            company_id,
+            year,
+            equity_capital,
+            reserves,
+            borrowings
+        FROM balancesheet
+        WHERE year IS NOT NULL
+        """,
+        conn,
+    )
+
+    cashflow = pd.read_sql_query(
+        """
+        SELECT
+            company_id,
+            year,
+            operating_activity,
+            investing_activity
+        FROM cashflow
+        WHERE year IS NOT NULL
+        """,
+        conn,
+    )
 
     conn.close()
 
-        # Calculate 5-year FCF CAGR from annual free cash flow
-    fcf = ratios[
+    return (
+        companies,
+        sectors,
+        ratios,
+        pnl,
+        balance,
+        cashflow,
+    )
+
+
+# ============================================================
+# CAGR HELPERS
+# ============================================================
+
+
+def calculate_cagr(start_value, end_value, years):
+    """Calculate CAGR percentage when values support a valid CAGR."""
+
+    if pd.isna(start_value) or pd.isna(end_value):
+        return np.nan
+
+    if years <= 0:
+        return np.nan
+
+    if start_value <= 0 or end_value <= 0:
+        return np.nan
+
+    return ((end_value / start_value) ** (1 / years) - 1) * 100
+
+
+def calculate_revenue_cagr(pnl):
+    """Calculate five-year revenue CAGR from P&L history."""
+
+    results = []
+
+    for company_id, group in pnl.groupby("company_id"):
+
+        group = group[group["sales"].notna() & (group["sales"] > 0)].sort_values("year")
+
+        if len(group) < 2:
+            results.append(
+                {
+                    "company_id": company_id,
+                    "revenue_cagr_5yr_derived": np.nan,
+                }
+            )
+            continue
+
+        latest = group.iloc[-1]
+        target_year = latest["year"] - 5
+
+        historical = group[group["year"] <= target_year]
+
+        if historical.empty:
+            results.append(
+                {
+                    "company_id": company_id,
+                    "revenue_cagr_5yr_derived": np.nan,
+                }
+            )
+            continue
+
+        start = historical.iloc[-1]
+
+        cagr = calculate_cagr(
+            start["sales"],
+            latest["sales"],
+            latest["year"] - start["year"],
+        )
+
+        results.append(
+            {
+                "company_id": company_id,
+                "revenue_cagr_5yr_derived": cagr,
+            }
+        )
+
+    return pd.DataFrame(results)
+
+
+def calculate_fcf_history(cashflow):
+    """Calculate free cash flow from cash-flow history."""
+
+    df = cashflow.copy()
+
+    df["free_cash_flow_cr_derived"] = pd.to_numeric(
+        df["operating_activity"],
+        errors="coerce",
+    ) + pd.to_numeric(
+        df["investing_activity"],
+        errors="coerce",
+    )
+
+    return df
+
+
+def calculate_fcf_cagr(cashflow):
+    """Calculate five-year FCF CAGR from cash-flow history."""
+
+    fcf = calculate_fcf_history(cashflow)
+
+    results = []
+
+    for company_id, group in fcf.groupby("company_id"):
+
+        group = group[group["free_cash_flow_cr_derived"].notna()].sort_values("year")
+
+        if len(group) < 2:
+            results.append(
+                {
+                    "company_id": company_id,
+                    "fcf_cagr_5yr_derived": np.nan,
+                }
+            )
+            continue
+
+        latest = group.iloc[-1]
+        target_year = latest["year"] - 5
+
+        historical = group[group["year"] <= target_year]
+
+        if historical.empty:
+            results.append(
+                {
+                    "company_id": company_id,
+                    "fcf_cagr_5yr_derived": np.nan,
+                }
+            )
+            continue
+
+        start = historical.iloc[-1]
+
+        cagr = calculate_cagr(
+            start["free_cash_flow_cr_derived"],
+            latest["free_cash_flow_cr_derived"],
+            latest["year"] - start["year"],
+        )
+
+        results.append(
+            {
+                "company_id": company_id,
+                "fcf_cagr_5yr_derived": cagr,
+            }
+        )
+
+    return pd.DataFrame(results)
+
+
+# ============================================================
+# FEATURE BUILDING
+# ============================================================
+
+
+def calculate_debt_to_equity(balance):
+    """Calculate D/E from balance sheet."""
+
+    df = balance.copy()
+
+    df["equity_base"] = pd.to_numeric(
+        df["equity_capital"],
+        errors="coerce",
+    ) + pd.to_numeric(
+        df["reserves"],
+        errors="coerce",
+    )
+
+    df["debt_to_equity_derived"] = np.where(
+        df["equity_base"] > 0,
+        df["borrowings"] / df["equity_base"],
+        np.nan,
+    )
+
+    latest = df.sort_values("year").groupby("company_id", as_index=False).tail(1)
+
+    return latest[
         [
             "company_id",
-            "year",
-            "free_cash_flow_cr",
+            "debt_to_equity_derived",
+        ]
+    ]
+
+
+def calculate_latest_opm(pnl):
+    """Calculate latest operating profit margin from P&L."""
+
+    df = pnl.copy()
+
+    df["sales"] = pd.to_numeric(
+        df["sales"],
+        errors="coerce",
+    )
+
+    df["operating_profit"] = pd.to_numeric(
+        df["operating_profit"],
+        errors="coerce",
+    )
+
+    df["opm_derived"] = np.where(
+        df["sales"] != 0,
+        (df["operating_profit"] / df["sales"]) * 100,
+        np.nan,
+    )
+
+    latest = df.sort_values("year").groupby("company_id", as_index=False).tail(1)
+
+    return latest[
+        [
+            "company_id",
+            "opm_derived",
+        ]
+    ]
+
+
+def build_feature_dataset():
+    """Build the complete 92-company clustering dataset."""
+
+    (
+        companies,
+        sectors,
+        ratios,
+        pnl,
+        balance,
+        cashflow,
+    ) = load_source_data()
+
+    # --------------------------------------------------------
+    # Start from ALL companies.
+    # This is critical because financial_ratios only has 90.
+    # --------------------------------------------------------
+
+    df = companies[
+        [
+            "company_id",
+            "company_name",
+            "roe_percentage",
         ]
     ].copy()
 
-    fcf = fcf.dropna(
-        subset=["company_id", "year"]
-    )
-
-    fcf = fcf.sort_values(
-        ["company_id", "year"]
-    )
-
-    def calculate_fcf_cagr(group):
-        group = group.sort_values("year").copy()
-
-        if len(group) < 6:
-            return np.nan
-
-        latest = group.iloc[-1]
-        five_years_ago = group.iloc[-6]
-
-        start = five_years_ago["free_cash_flow_cr"]
-        end = latest["free_cash_flow_cr"]
-
-        # CAGR is not meaningful when either endpoint is
-        # zero or negative.
-        if pd.isna(start) or pd.isna(end):
-            return np.nan
-
-        if start <= 0 or end <= 0:
-            return np.nan
-
-        return (
-            ((end / start) ** (1 / 5)) - 1
-        ) * 100
-
-    fcf_cagr = (
-        fcf.groupby("company_id")
-        .apply(
-            calculate_fcf_cagr,
-            include_groups=False,
-        )
-        .reset_index(
-            name="fcf_cagr_5yr"
-        )
-    )
-
-    ratios = ratios.merge(
-        fcf_cagr,
-        on="company_id",
-        how="left",
-    )
-    return ratios, sectors, companies, clusters
-
-
-# ============================================================
-# LATEST YEAR DATA
-# ============================================================
-def build_latest_year_dataset(ratios, sectors, companies):
-    """
-    Select latest available ratio year per company and
-    attach sector/company information.
-
-    FCF CAGR is calculated from the annual
-    free_cash_flow_cr values.
-    """
-
-    ratios = ratios.copy()
-
-    # Ensure numeric values
-    ratios["year"] = pd.to_numeric(
-        ratios["year"],
-        errors="coerce",
-    )
-
-    ratios["free_cash_flow_cr"] = pd.to_numeric(
-        ratios["free_cash_flow_cr"],
-        errors="coerce",
-    )
-
-    # Sort chronologically
-    ratios = ratios.sort_values(
-        ["company_id", "year"]
-    )
-
-    # --------------------------------------------------------
-    # Calculate 5-year FCF CAGR
-    # --------------------------------------------------------
-
-    ratios["fcf_5yr_ago"] = (
-        ratios
-        .groupby("company_id")["free_cash_flow_cr"]
-        .shift(5)
-    )
-
-    valid_fcf = (
-        ratios["free_cash_flow_cr"].notna()
-        & ratios["fcf_5yr_ago"].notna()
-        & (ratios["free_cash_flow_cr"] > 0)
-        & (ratios["fcf_5yr_ago"] > 0)
-    )
-
-    ratios["fcf_cagr_5yr"] = np.nan
-
-    ratios.loc[valid_fcf, "fcf_cagr_5yr"] = (
-        (
-            ratios.loc[valid_fcf, "free_cash_flow_cr"]
-            / ratios.loc[valid_fcf, "fcf_5yr_ago"]
-        ) ** (1 / 5) - 1
-    ) * 100
-
-    # Remove helper column
-    ratios = ratios.drop(
-        columns=["fcf_5yr_ago"]
-    )
-
-    # --------------------------------------------------------
-    # Latest available year per company
-    # --------------------------------------------------------
-
-    latest = (
-        ratios
-        .dropna(subset=["year"])
-        .groupby(
-            "company_id",
-            as_index=False,
-        )
-        .tail(1)
-        .copy()
-    )
-
-    # --------------------------------------------------------
-    # Attach company information
-    # --------------------------------------------------------
-
-    latest = latest.merge(
-        companies,
-        on="company_id",
-        how="right",
-    )
-
-    # --------------------------------------------------------
-    # Attach sector information
-    # --------------------------------------------------------
-
-    latest = latest.merge(
+    df = df.merge(
         sectors[
             [
                 "company_id",
@@ -287,578 +397,522 @@ def build_latest_year_dataset(ratios, sectors, companies):
         how="left",
     )
 
-    return latest
+    # --------------------------------------------------------
+    # Latest financial ratio record where available
+    # --------------------------------------------------------
+
+    ratios = ratios.sort_values("year")
+
+    latest_ratios = ratios.groupby("company_id", as_index=False).tail(1).copy()
+
+    latest_ratios = latest_ratios[
+        [
+            "company_id",
+            "return_on_equity_pct",
+            "debt_to_equity",
+            "revenue_cagr_5yr",
+            "operating_profit_margin_pct",
+        ]
+    ]
+
+    df = df.merge(
+        latest_ratios,
+        on="company_id",
+        how="left",
+    )
+
+    # --------------------------------------------------------
+    # ROE fallback from companies table
+    # --------------------------------------------------------
+
+    df["return_on_equity_pct"] = df["return_on_equity_pct"].fillna(df["roe_percentage"])
+
+    # --------------------------------------------------------
+    # Derived revenue CAGR
+    # --------------------------------------------------------
+
+    revenue_cagr = calculate_revenue_cagr(pnl)
+
+    df = df.merge(
+        revenue_cagr,
+        on="company_id",
+        how="left",
+    )
+
+    df["revenue_cagr_5yr"] = df["revenue_cagr_5yr"].fillna(
+        df["revenue_cagr_5yr_derived"]
+    )
+
+    df.drop(
+        columns=["revenue_cagr_5yr_derived"],
+        inplace=True,
+    )
+
+    # --------------------------------------------------------
+    # Derived D/E
+    # --------------------------------------------------------
+
+    de = calculate_debt_to_equity(balance)
+
+    df = df.merge(
+        de,
+        on="company_id",
+        how="left",
+    )
+
+    df["debt_to_equity"] = df["debt_to_equity"].fillna(df["debt_to_equity_derived"])
+
+    df.drop(
+        columns=["debt_to_equity_derived"],
+        inplace=True,
+    )
+
+    # --------------------------------------------------------
+    # Derived OPM
+    # --------------------------------------------------------
+
+    opm = calculate_latest_opm(pnl)
+
+    df = df.merge(
+        opm,
+        on="company_id",
+        how="left",
+    )
+
+    df["operating_profit_margin_pct"] = df["operating_profit_margin_pct"].fillna(
+        df["opm_derived"]
+    )
+
+    df.drop(
+        columns=["opm_derived"],
+        inplace=True,
+    )
+
+    # --------------------------------------------------------
+    # FCF CAGR
+    # --------------------------------------------------------
+
+    existing_fcf = calculate_existing_fcf_cagr(ratios)
+
+    derived_fcf = calculate_fcf_cagr(cashflow)
+
+    df = df.merge(
+        existing_fcf,
+        on="company_id",
+        how="left",
+    )
+
+    df = df.merge(
+        derived_fcf,
+        on="company_id",
+        how="left",
+    )
+
+    df["fcf_cagr_5yr"] = df["fcf_cagr_5yr_existing"].fillna(df["fcf_cagr_5yr_derived"])
+
+    df.drop(
+        columns=[
+            "fcf_cagr_5yr_existing",
+            "fcf_cagr_5yr_derived",
+        ],
+        inplace=True,
+    )
+
+    return df
+
+
+def calculate_existing_fcf_cagr(ratios):
+    """Calculate FCF CAGR from existing financial-ratio history."""
+
+    results = []
+
+    for company_id, group in ratios.groupby("company_id"):
+
+        group = group[group["free_cash_flow_cr"].notna()].sort_values("year")
+
+        if len(group) < 2:
+            results.append(
+                {
+                    "company_id": company_id,
+                    "fcf_cagr_5yr_existing": np.nan,
+                }
+            )
+            continue
+
+        latest = group.iloc[-1]
+
+        target_year = latest["year"] - 5
+
+        historical = group[group["year"] <= target_year]
+
+        if historical.empty:
+            results.append(
+                {
+                    "company_id": company_id,
+                    "fcf_cagr_5yr_existing": np.nan,
+                }
+            )
+            continue
+
+        start = historical.iloc[-1]
+
+        cagr = calculate_cagr(
+            start["free_cash_flow_cr"],
+            latest["free_cash_flow_cr"],
+            latest["year"] - start["year"],
+        )
+
+        results.append(
+            {
+                "company_id": company_id,
+                "fcf_cagr_5yr_existing": cagr,
+            }
+        )
+
+    return pd.DataFrame(results)
+
+
 # ============================================================
 # SECTOR MEDIAN IMPUTATION
 # ============================================================
 
-def sector_median_imputation(df, columns):
-    """
-    Fill missing values using broad-sector medians.
 
-    Overall median is the final fallback.
-    """
+def impute_sector_medians(df):
+    """Impute missing feature values using broad-sector medians."""
 
     result = df.copy()
 
-    for column in columns:
+    print("\n=== MISSING VALUES BEFORE IMPUTATION ===")
+    print(result[FEATURES].isna().sum())
 
-        result[column] = pd.to_numeric(
-            result[column],
+    for feature in FEATURES:
+
+        result[feature] = pd.to_numeric(
+            result[feature],
             errors="coerce",
         )
 
-        sector_median = (
-            result
-            .groupby("broad_sector")[column]
-            .transform("median")
-        )
+        sector_median = result.groupby("broad_sector")[feature].transform("median")
 
-        result[column] = (
-            result[column]
-            .fillna(sector_median)
-        )
+        result[feature] = result[feature].fillna(sector_median)
 
-        result[column] = (
-            result[column]
-            .fillna(result[column].median())
-        )
+        result[feature] = result[feature].fillna(result[feature].median())
+
+    print("\n=== MISSING VALUES AFTER IMPUTATION ===")
+    print(result[FEATURES].isna().sum())
 
     return result
 
 
 # ============================================================
-# CLUSTER PROFILES
+# ELBOW PLOT
 # ============================================================
 
-def generate_cluster_profiles(latest):
-    """
-    Generate mean and median values for each cluster.
 
-    Uses cluster_labels.csv.
-    """
+def generate_elbow_plot(X_scaled):
+    """Generate elbow plot for k=2 through k=10."""
 
-    cluster_path = OUTPUT_DIR / "cluster_labels.csv"
+    inertias = []
+    k_values = range(2, 11)
 
-    clusters = pd.read_csv(cluster_path)
+    for k in k_values:
 
-    df = latest.merge(
-        clusters[
-            [
-                "company_id",
-                "cluster_id",
-                "cluster_name",
-            ]
-        ],
-        on="company_id",
-        how="left",
+        model = KMeans(
+            n_clusters=k,
+            random_state=42,
+            n_init=20,
+        )
+
+        model.fit(X_scaled)
+        inertias.append(model.inertia_)
+
+    plt.figure(figsize=(9, 6))
+
+    plt.plot(
+        list(k_values),
+        inertias,
+        marker="o",
     )
 
-    df = sector_median_imputation(
-        df,
-        CLUSTER_FEATURES,
-    )
+    plt.xlabel("Number of Clusters (k)")
+    plt.ylabel("Inertia")
+    plt.title("KMeans Elbow Plot")
 
-    mean_profile = (
-        df
-        .groupby(
-            [
-                "cluster_id",
-                "cluster_name",
-            ]
-        )[CLUSTER_FEATURES]
-        .mean()
-        .reset_index()
-    )
-
-    median_profile = (
-        df
-        .groupby(
-            [
-                "cluster_id",
-                "cluster_name",
-            ]
-        )[CLUSTER_FEATURES]
-        .median()
-        .reset_index()
-    )
-
-    mean_profile["statistic"] = "mean"
-    median_profile["statistic"] = "median"
-
-    profile = pd.concat(
-        [
-            mean_profile,
-            median_profile,
-        ],
-        ignore_index=True,
-    )
-
-    profile = profile[
-        [
-            "cluster_id",
-            "cluster_name",
-            "statistic",
-        ]
-        + CLUSTER_FEATURES
-    ]
-
-    profile = profile.sort_values(
-        [
-            "cluster_id",
-            "statistic",
-        ]
-    )
-
-    output_path = (
-        OUTPUT_DIR / "cluster_profiles.csv"
-    )
-
-    profile.to_csv(
-        output_path,
-        index=False,
-    )
-
-    print(
-        f"Saved cluster profiles: {output_path}"
-    )
-
-    return df, profile
-
-
-# ============================================================
-# CORRELATION HEATMAP
-# ============================================================
-
-def generate_correlation_heatmap(latest):
-    """
-    Generate Pearson correlation matrix for
-    10 core KPIs across all 92 companies.
-    """
-
-    df = latest.copy()
-
-    df = sector_median_imputation(
-        df,
-        CORE_KPIS,
-    )
-
-    correlation = df[
-        CORE_KPIS
-    ].corr(
-        method="pearson"
-    )
-
-    print("\nCorrelation matrix:")
-    print(correlation.round(3))
-
-    plt.figure(
-        figsize=(14, 11)
-    )
-
-    sns.heatmap(
-        correlation,
-        annot=True,
-        fmt=".2f",
-        cmap="coolwarm",
-        center=0,
-        square=True,
-        linewidths=0.5,
-        cbar_kws={
-            "label": "Pearson Correlation"
-        },
-    )
-
-    plt.title(
-        "Nifty 100 Financial KPI Correlation Matrix"
-    )
+    plt.xticks(list(k_values))
+    plt.grid(True, alpha=0.3)
 
     plt.tight_layout()
 
-    output_path = (
-        REPORTS_DIR
-        / "correlation_heatmap.png"
-    )
+    output_path = REPORTS_DIR / "elbow_plot.png"
 
     plt.savefig(
         output_path,
-        dpi=180,
+        dpi=160,
         bbox_inches="tight",
     )
 
     plt.close()
 
-    print(
-        f"Saved correlation heatmap: {output_path}"
+    return output_path
+
+
+# ============================================================
+# CLUSTER NAMING
+# ============================================================
+
+
+def assign_cluster_names(profile):
+    """Assign descriptive financial archetype names."""
+
+    p = profile.copy()
+
+    roe_rank = p["return_on_equity_pct"].rank(pct=True)
+    opm_rank = p["operating_profit_margin_pct"].rank(pct=True)
+    revenue_rank = p["revenue_cagr_5yr"].rank(pct=True)
+    fcf_rank = p["fcf_cagr_5yr"].rank(pct=True)
+
+    leverage_rank = 1 - p["debt_to_equity"].rank(pct=True)
+
+    quality = roe_rank + opm_rank + leverage_rank
+
+    growth = revenue_rank + fcf_rank
+
+    overall = quality + growth
+
+    names = {}
+
+    high_quality = overall.idxmax()
+    names[high_quality] = "High-Quality Compounders"
+
+    remaining = list(set(p.index) - {high_quality})
+
+    growth_cluster = (
+        p.loc[remaining, "revenue_cagr_5yr"].rank(pct=True)
+        + p.loc[remaining, "fcf_cagr_5yr"].rank(pct=True)
+    ).idxmax()
+
+    names[growth_cluster] = "Emerging Growth"
+
+    remaining.remove(growth_cluster)
+
+    defensive_cluster = (1 - p.loc[remaining, "debt_to_equity"].rank(pct=True)).idxmax()
+
+    names[defensive_cluster] = "Defensive Dividend Payers"
+
+    remaining.remove(defensive_cluster)
+
+    distressed_cluster = overall.loc[remaining].idxmin()
+
+    names[distressed_cluster] = "Distressed or Turnaround"
+
+    remaining.remove(distressed_cluster)
+
+    for cluster_id in remaining:
+        names[cluster_id] = "Value Cyclicals"
+
+    return names
+
+
+# ============================================================
+# MAIN CLUSTERING PIPELINE
+# ============================================================
+
+
+def run_clustering():
+    """Run the complete Day 36 clustering pipeline."""
+
+    print("=" * 60)
+    print("DAY 36 - KMEANS FINANCIAL CLUSTERING")
+    print("=" * 60)
+
+    # --------------------------------------------------------
+    # Build 92-company feature dataset
+    # --------------------------------------------------------
+
+    df = build_feature_dataset()
+
+    print(f"Companies prepared: " f"{df['company_id'].nunique()}")
+
+    # --------------------------------------------------------
+    # HARD QA: must contain all 92 companies
+    # --------------------------------------------------------
+
+    if len(df) != 92:
+        raise ValueError(f"Expected 92 companies, found {len(df)}")
+
+    if df["company_id"].nunique() != 92:
+        raise ValueError("Company IDs are not unique.")
+
+    # --------------------------------------------------------
+    # Sector median imputation
+    # --------------------------------------------------------
+
+    df = impute_sector_medians(df)
+
+    if df[FEATURES].isna().any().any():
+
+        missing = df[df[FEATURES].isna().any(axis=1)][["company_id"] + FEATURES]
+
+        print("\nCompanies still containing missing values:")
+        print(missing)
+
+        raise ValueError("Missing values remain after imputation.")
+
+    # --------------------------------------------------------
+    # Prepare feature matrix
+    # --------------------------------------------------------
+
+    X = df[FEATURES].astype(float)
+
+    # --------------------------------------------------------
+    # StandardScaler
+    # --------------------------------------------------------
+
+    scaler = StandardScaler()
+
+    X_scaled = scaler.fit_transform(X)
+
+    print("\nFeatures standardized successfully.")
+
+    # --------------------------------------------------------
+    # Elbow plot
+    # --------------------------------------------------------
+
+    print("\nGenerating elbow plot...")
+
+    elbow_path = generate_elbow_plot(X_scaled)
+
+    print(f"Saved: {elbow_path}")
+
+    # --------------------------------------------------------
+    # KMeans
+    # --------------------------------------------------------
+
+    model = KMeans(
+        n_clusters=5,
+        random_state=42,
+        n_init=20,
     )
 
-    return correlation
+    cluster_ids = model.fit_predict(X_scaled)
 
+    df["cluster_id"] = cluster_ids
 
-# ============================================================
-# OUTLIER DETECTION
-# ============================================================
+    # --------------------------------------------------------
+    # Distance from centroid
+    # --------------------------------------------------------
 
-def generate_outlier_report(latest):
-    """
-    Calculate sector-wise Z-scores.
+    distances = model.transform(X_scaled)
 
-    Flag companies where:
-        abs(Z-score) > 3
-    """
-
-    df = latest.copy()
-
-    records = []
-
-    for metric in CORE_KPIS:
-
-        df[metric] = pd.to_numeric(
-            df[metric],
-            errors="coerce",
-        )
-
-        for sector, group in df.groupby(
-            "broad_sector",
-            dropna=False,
-        ):
-
-            group = group.copy()
-
-            values = group[metric]
-
-            sector_mean = values.mean()
-            sector_std = values.std(ddof=0)
-
-            if pd.isna(sector_std) or sector_std == 0:
-                continue
-
-            group["z_score"] = (
-                values - sector_mean
-            ) / sector_std
-
-            outliers = group[
-                group["z_score"].abs() > 3
-            ]
-
-            for _, row in outliers.iterrows():
-
-                records.append(
-                    {
-                        "company_id": row[
-                            "company_id"
-                        ],
-                        "metric": metric,
-                        "value": row[metric],
-                        "z_score": row[
-                            "z_score"
-                        ],
-                        "sector": sector,
-                        "sector_mean": sector_mean,
-                        "sector_std": sector_std,
-                    }
-                )
-
-    columns = [
-        "company_id",
-        "metric",
-        "value",
-        "z_score",
-        "sector",
-        "sector_mean",
-        "sector_std",
+    df["distance_from_centroid"] = distances[
+        np.arange(len(df)),
+        cluster_ids,
     ]
 
-    report = pd.DataFrame(
-        records,
-        columns=columns,
-    )
+    # --------------------------------------------------------
+    # Cluster profiles
+    # --------------------------------------------------------
 
-    if not report.empty:
-        report = report.sort_values(
-            "z_score",
-            key=lambda x: x.abs(),
-            ascending=False,
-        )
+    profile = df.groupby("cluster_id")[FEATURES].median()
 
-    output_path = (
-        OUTPUT_DIR / "outlier_report.csv"
-    )
+    # --------------------------------------------------------
+    # Cluster names
+    # --------------------------------------------------------
 
-    report.to_csv(
+    cluster_names = assign_cluster_names(profile)
+
+    df["cluster_name"] = df["cluster_id"].map(cluster_names)
+
+    # --------------------------------------------------------
+    # Final output
+    # --------------------------------------------------------
+
+    output = df[
+        [
+            "company_id",
+            "cluster_id",
+            "cluster_name",
+            "distance_from_centroid",
+        ]
+    ].sort_values("company_id")
+
+    output_path = OUTPUT_DIR / "cluster_labels.csv"
+
+    output.to_csv(
         output_path,
         index=False,
     )
 
-    print(
-        f"\nOutliers detected: {len(report)}"
-    )
-
-    print(
-        f"Saved outlier report: {output_path}"
-    )
-
-    return report
-
-
-# ============================================================
-# PORTFOLIO STATISTICS
-# ============================================================
-
-def generate_portfolio_stats(latest):
-    """
-    Generate P10, P25, P50, P75, P90,
-    Mean and Std for all 10 KPIs.
-    """
-
-    df = latest.copy()
-
-    df = sector_median_imputation(
-        df,
-        CORE_KPIS,
-    )
-
-    records = []
-
-    for metric in CORE_KPIS:
-
-        values = pd.to_numeric(
-            df[metric],
-            errors="coerce",
-        ).dropna()
-
-        records.append(
-            {
-                "metric": metric,
-                "P10": values.quantile(0.10),
-                "P25": values.quantile(0.25),
-                "P50": values.quantile(0.50),
-                "P75": values.quantile(0.75),
-                "P90": values.quantile(0.90),
-                "Mean": values.mean(),
-                "Std": values.std(),
-            }
-        )
-
-    stats = pd.DataFrame(
-        records
-    )
-
-    output_path = (
-        OUTPUT_DIR / "portfolio_stats.csv"
-    )
-
-    stats.to_csv(
-        output_path,
-        index=False,
-    )
-
-    print(
-        f"Saved portfolio statistics: {output_path}"
-    )
-
-    return stats
-
-
-# ============================================================
-# MAIN
-# ============================================================
-
-def run_day37():
-
-    print("=" * 65)
-    print("DAY 37 - CLUSTER PROFILING & STATISTICS")
-    print("=" * 65)
-
-    ratios, sectors, companies, clusters = (
-        load_data()
-    )
-
-    print(
-        f"Companies in database: "
-        f"{companies['company_id'].nunique()}"
-    )
-
-    latest = build_latest_year_dataset(
-        ratios,
-        sectors,
-        companies,
-    )
-
-    print(
-        f"Latest-year company rows: "
-        f"{latest['company_id'].nunique()}"
-    )
-
-    if latest["company_id"].nunique() != 92:
-        raise ValueError(
-            "Expected 92 companies in latest-year dataset."
-        )
-
     # --------------------------------------------------------
-    # Cluster profiling
+    # QA
     # --------------------------------------------------------
 
-    print("\n" + "=" * 65)
-    print("1. CLUSTER PROFILES")
-    print("=" * 65)
+    print("\n" + "=" * 60)
+    print("CLUSTER DISTRIBUTION")
+    print("=" * 60)
 
-    cluster_data, profiles = (
-        generate_cluster_profiles(
-            latest
-        )
+    print(output["cluster_name"].value_counts())
+
+    print("\n" + "=" * 60)
+    print("CLUSTER PROFILES")
+    print("=" * 60)
+
+    print(profile)
+
+    print("\n" + "=" * 60)
+    print("FINAL QA")
+    print("=" * 60)
+
+    print(f"Rows: {len(output)}")
+
+    print(f"Unique companies: " f"{output['company_id'].nunique()}")
+
+    print(f"Unique clusters: " f"{output['cluster_id'].nunique()}")
+
+    print(
+        "Missing cluster IDs:",
+        output["cluster_id"].isna().sum(),
     )
 
     print(
-        profiles.to_string(
-            index=False
-        )
+        "Missing cluster names:",
+        output["cluster_name"].isna().sum(),
+    )
+
+    print(
+        "Missing distances:",
+        output["distance_from_centroid"].isna().sum(),
     )
 
     # --------------------------------------------------------
-    # Correlation heatmap
+    # Hard acceptance checks
     # --------------------------------------------------------
 
-    print("\n" + "=" * 65)
-    print("2. CORRELATION HEATMAP")
-    print("=" * 65)
+    if len(output) != 92:
+        raise ValueError("Output must contain exactly 92 rows.")
 
-    correlation = (
-        generate_correlation_heatmap(
-            latest
-        )
-    )
+    if output["company_id"].nunique() != 92:
+        raise ValueError("Output must contain 92 unique companies.")
 
-    # --------------------------------------------------------
-    # Outlier report
-    # --------------------------------------------------------
+    if output["cluster_id"].nunique() != 5:
+        raise ValueError("Expected exactly 5 clusters.")
 
-    print("\n" + "=" * 65)
-    print("3. OUTLIER DETECTION")
-    print("=" * 65)
+    if output["cluster_id"].isna().any():
+        raise ValueError("Some companies have no cluster ID.")
 
-    outliers = generate_outlier_report(
-        latest
-    )
+    if output["cluster_name"].isna().any():
+        raise ValueError("Some companies have no cluster name.")
 
-    # --------------------------------------------------------
-    # Portfolio statistics
-    # --------------------------------------------------------
+    if output["distance_from_centroid"].isna().any():
 
-    print("\n" + "=" * 65)
-    print("4. PORTFOLIO STATISTICS")
-    print("=" * 65)
+        raise ValueError("Some companies have no centroid distance.")
 
-    stats = generate_portfolio_stats(
-        latest
-    )
+    print(f"\nSaved: {output_path}")
 
-    print("\nPortfolio statistics:")
-    print(
-        stats.to_string(
-            index=False
-        )
-    )
+    print(f"Saved: {elbow_path}")
 
-    # --------------------------------------------------------
-    # Final QA
-    # --------------------------------------------------------
-
-    print("\n" + "=" * 65)
-    print("DAY 37 FINAL QA")
-    print("=" * 65)
-
-    print(
-        "Companies:",
-        latest["company_id"].nunique(),
-    )
-
-    print(
-        "Clusters:",
-        cluster_data["cluster_id"]
-        .nunique(),
-    )
-
-    print(
-        "Cluster profiles:",
-        len(profiles),
-    )
-
-    print(
-        "Correlation KPIs:",
-        len(CORE_KPIS),
-    )
-
-    print(
-        "Correlation matrix shape:",
-        correlation.shape,
-    )
-
-    print(
-        "Outlier rows:",
-        len(outliers),
-    )
-
-    print(
-        "Portfolio statistic rows:",
-        len(stats),
-    )
-
-    # --------------------------------------------------------
-    # Hard checks
-    # --------------------------------------------------------
-
-    if latest["company_id"].nunique() != 92:
-        raise ValueError(
-            "Day 37 requires all 92 companies."
-        )
-
-    if cluster_data["cluster_id"].nunique() != 5:
-        raise ValueError(
-            "Expected exactly 5 clusters."
-        )
-
-    if len(profiles) != 10:
-        raise ValueError(
-            "Expected 5 clusters × 2 statistics."
-        )
-
-    if correlation.shape != (10, 10):
-        raise ValueError(
-            "Correlation matrix must be 10 × 10."
-        )
-
-    if len(stats) != 10:
-        raise ValueError(
-            "Expected portfolio statistics for 10 KPIs."
-        )
-
-    required_outputs = [
-        OUTPUT_DIR / "cluster_profiles.csv",
-        OUTPUT_DIR / "outlier_report.csv",
-        OUTPUT_DIR / "portfolio_stats.csv",
-        REPORTS_DIR / "correlation_heatmap.png",
-    ]
-
-    for path in required_outputs:
-
-        if not path.exists():
-            raise FileNotFoundError(
-                f"Missing required output: {path}"
-            )
-
-        if path.stat().st_size == 0:
-            raise ValueError(
-                f"Output is empty: {path}"
-            )
-
-    print("\n" + "=" * 65)
-    print("DAY 37 COMPLETED SUCCESSFULLY")
-    print("=" * 65)
-
-    for path in required_outputs:
-        print(f"PASS: {path}")
+    print("\nDay 36 completed successfully.")
 
 
 if __name__ == "__main__":
-    run_day37()
+    run_clustering()

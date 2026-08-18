@@ -1,20 +1,20 @@
 import os
-import sqlite3
-import pandas as pd
 import re
+import sqlite3
 
+import pandas as pd
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    SimpleDocTemplate,
+    PageBreak,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    PageBreak,
 )
 
 # ============================================================
@@ -35,6 +35,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # ============================================================
 # DATABASE
 # ============================================================
+
 
 def get_connection():
     return sqlite3.connect(DATABASE)
@@ -121,12 +122,7 @@ def load_data():
     conn.close()
 
     # Normalize IDs before any display-name logic.
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.rstrip(";")
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.rstrip(";")
 
     return df
 
@@ -135,6 +131,7 @@ def load_data():
 # VALIDATION
 # ============================================================
 
+
 def validate_data(df):
     company_count = df["company_id"].nunique()
 
@@ -142,30 +139,20 @@ def validate_data(df):
 
     if company_count != EXPECTED_COMPANIES:
         raise ValueError(
-            f"Expected {EXPECTED_COMPANIES} companies, "
-            f"found {company_count}"
+            f"Expected {EXPECTED_COMPANIES} companies, " f"found {company_count}"
         )
 
-    duplicate_ids = (
-        df["company_id"]
-        .value_counts()
-    )
+    duplicate_ids = df["company_id"].value_counts()
 
     duplicates = duplicate_ids[duplicate_ids > 1]
 
     if not duplicates.empty:
-        raise ValueError(
-            "Duplicate company rows detected:\n"
-            + duplicates.to_string()
-        )
+        raise ValueError("Duplicate company rows detected:\n" + duplicates.to_string())
 
     missing_latest = df["latest_year"].isna().sum()
 
     if missing_latest:
-        print(
-            f"Warning: {missing_latest} companies have no "
-            "financial-ratio data."
-        )
+        print(f"Warning: {missing_latest} companies have no " "financial-ratio data.")
 
     missing_3yr = df["previous_year"].isna().sum()
 
@@ -174,19 +161,15 @@ def validate_data(df):
         f"{company_count - missing_3yr}"
     )
 
-    print(
-        f"Companies without exact {TREND_YEARS}-year comparison: "
-        f"{missing_3yr}"
-    )
+    print(f"Companies without exact {TREND_YEARS}-year comparison: " f"{missing_3yr}")
 
     # Make sure any available comparison really is exactly 3 years earlier.
     valid = df["previous_year"].notna() & df["latest_year"].notna()
 
     if valid.any():
-        delta = (
-            df.loc[valid, "latest_year"].astype(int)
-            - df.loc[valid, "previous_year"].astype(int)
-        )
+        delta = df.loc[valid, "latest_year"].astype(int) - df.loc[
+            valid, "previous_year"
+        ].astype(int)
 
         if not (delta == TREND_YEARS).all():
             raise ValueError(
@@ -198,6 +181,7 @@ def validate_data(df):
 # ============================================================
 # HELPERS
 # ============================================================
+
 
 def safe_float(value):
     try:
@@ -269,11 +253,7 @@ def clean_ticker(value):
     if pd.isna(value):
         return "N/A"
 
-    return (
-        str(value)
-        .strip()
-        .rstrip(";")
-    )
+    return str(value).strip().rstrip(";")
 
 
 def clean_company_name(value, ticker=None):
@@ -286,11 +266,7 @@ def clean_company_name(value, ticker=None):
     if pd.isna(value):
         name = "N/A"
     else:
-        name = re.sub(
-            r"\s+",
-            " ",
-            str(value).replace("\n", " ")
-        ).strip()
+        name = re.sub(r"\s+", " ", str(value).replace("\n", " ")).strip()
 
     ticker = clean_ticker(ticker)
 
@@ -305,12 +281,7 @@ def clean_company_name(value, ticker=None):
     ]
 
     for pattern in removable_suffixes:
-        name = re.sub(
-            pattern,
-            "",
-            name,
-            flags=re.IGNORECASE
-        ).strip()
+        name = re.sub(pattern, "", name, flags=re.IGNORECASE).strip()
 
     return name
 
@@ -366,12 +337,10 @@ small_style = ParagraphStyle(
 # HEADER
 # ============================================================
 
+
 def create_header(row):
     ticker = clean_ticker(row["company_id"])
-    company_name = clean_company_name(
-        row["company_name"],
-        ticker
-    )
+    company_name = clean_company_name(row["company_name"], ticker)
 
     sector = row["broad_sector"]
 
@@ -381,18 +350,8 @@ def create_header(row):
         sector = str(sector).strip()
 
     data = [
-        [
-            Paragraph(
-                f"<b>{company_name}</b>",
-                header_style
-            )
-        ],
-        [
-            Paragraph(
-                f"{ticker}  |  {sector}",
-                sector_style
-            )
-        ],
+        [Paragraph(f"<b>{company_name}</b>", header_style)],
+        [Paragraph(f"{ticker}  |  {sector}", sector_style)],
     ]
 
     table = Table(
@@ -401,44 +360,46 @@ def create_header(row):
     )
 
     table.setStyle(
-        TableStyle([
-            (
-                "BACKGROUND",
-                (0, 0),
-                (-1, -1),
-                colors.HexColor("#172554"),
-            ),
-            (
-                "VALIGN",
-                (0, 0),
-                (-1, -1),
-                "MIDDLE",
-            ),
-            (
-                "LEFTPADDING",
-                (0, 0),
-                (-1, -1),
-                8,
-            ),
-            (
-                "RIGHTPADDING",
-                (0, 0),
-                (-1, -1),
-                8,
-            ),
-            (
-                "TOPPADDING",
-                (0, 0),
-                (-1, -1),
-                5,
-            ),
-            (
-                "BOTTOMPADDING",
-                (0, 0),
-                (-1, -1),
-                5,
-            ),
-        ])
+        TableStyle(
+            [
+                (
+                    "BACKGROUND",
+                    (0, 0),
+                    (-1, -1),
+                    colors.HexColor("#172554"),
+                ),
+                (
+                    "VALIGN",
+                    (0, 0),
+                    (-1, -1),
+                    "MIDDLE",
+                ),
+                (
+                    "LEFTPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    8,
+                ),
+                (
+                    "RIGHTPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    8,
+                ),
+                (
+                    "TOPPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    5,
+                ),
+                (
+                    "BOTTOMPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    5,
+                ),
+            ]
+        )
     )
 
     return table
@@ -447,6 +408,7 @@ def create_header(row):
 # ============================================================
 # KPI TABLE
 # ============================================================
+
 
 def create_kpi_table(row):
     metrics = [
@@ -515,9 +477,7 @@ def create_kpi_table(row):
         if arrow == "N/A":
             trend_text = "N/A"
         else:
-            trend_text = (
-                f'<font size="13"><b>{arrow}</b></font>'
-            )
+            trend_text = f'<font size="13"><b>{arrow}</b></font>'
 
         data.append(
             [
@@ -538,51 +498,53 @@ def create_kpi_table(row):
     )
 
     table.setStyle(
-        TableStyle([
-            (
-                "BACKGROUND",
-                (0, 0),
-                (-1, 0),
-                colors.HexColor("#dbeafe"),
-            ),
-            (
-                "GRID",
-                (0, 0),
-                (-1, -1),
-                0.5,
-                colors.grey,
-            ),
-            (
-                "VALIGN",
-                (0, 0),
-                (-1, -1),
-                "MIDDLE",
-            ),
-            (
-                "LEFTPADDING",
-                (0, 0),
-                (-1, -1),
-                6,
-            ),
-            (
-                "RIGHTPADDING",
-                (0, 0),
-                (-1, -1),
-                6,
-            ),
-            (
-                "TOPPADDING",
-                (0, 0),
-                (-1, -1),
-                6,
-            ),
-            (
-                "BOTTOMPADDING",
-                (0, 0),
-                (-1, -1),
-                6,
-            ),
-        ])
+        TableStyle(
+            [
+                (
+                    "BACKGROUND",
+                    (0, 0),
+                    (-1, 0),
+                    colors.HexColor("#dbeafe"),
+                ),
+                (
+                    "GRID",
+                    (0, 0),
+                    (-1, -1),
+                    0.5,
+                    colors.grey,
+                ),
+                (
+                    "VALIGN",
+                    (0, 0),
+                    (-1, -1),
+                    "MIDDLE",
+                ),
+                (
+                    "LEFTPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    6,
+                ),
+                (
+                    "RIGHTPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    6,
+                ),
+                (
+                    "TOPPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    6,
+                ),
+                (
+                    "BOTTOMPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    6,
+                ),
+            ]
+        )
     )
 
     return table
@@ -591,6 +553,7 @@ def create_kpi_table(row):
 # ============================================================
 # PDF
 # ============================================================
+
 
 def build_portfolio_pdf(df):
     doc = SimpleDocTemplate(
@@ -680,45 +643,47 @@ def build_portfolio_pdf(df):
         )
 
         legend.setStyle(
-            TableStyle([
-                (
-                    "GRID",
-                    (0, 0),
-                    (-1, -1),
-                    0.4,
-                    colors.grey,
-                ),
-                (
-                    "VALIGN",
-                    (0, 0),
-                    (-1, -1),
-                    "MIDDLE",
-                ),
-                (
-                    "LEFTPADDING",
-                    (0, 0),
-                    (-1, -1),
-                    5,
-                ),
-                (
-                    "RIGHTPADDING",
-                    (0, 0),
-                    (-1, -1),
-                    5,
-                ),
-                (
-                    "TOPPADDING",
-                    (0, 0),
-                    (-1, -1),
-                    4,
-                ),
-                (
-                    "BOTTOMPADDING",
-                    (0, 0),
-                    (-1, -1),
-                    4,
-                ),
-            ])
+            TableStyle(
+                [
+                    (
+                        "GRID",
+                        (0, 0),
+                        (-1, -1),
+                        0.4,
+                        colors.grey,
+                    ),
+                    (
+                        "VALIGN",
+                        (0, 0),
+                        (-1, -1),
+                        "MIDDLE",
+                    ),
+                    (
+                        "LEFTPADDING",
+                        (0, 0),
+                        (-1, -1),
+                        5,
+                    ),
+                    (
+                        "RIGHTPADDING",
+                        (0, 0),
+                        (-1, -1),
+                        5,
+                    ),
+                    (
+                        "TOPPADDING",
+                        (0, 0),
+                        (-1, -1),
+                        4,
+                    ),
+                    (
+                        "BOTTOMPADDING",
+                        (0, 0),
+                        (-1, -1),
+                        4,
+                    ),
+                ]
+            )
         )
 
         story.append(legend)
@@ -727,13 +692,9 @@ def build_portfolio_pdf(df):
         # Explicitly show the comparison basis for transparency.
         previous_year = row["previous_year"]
 
-        if (
-            pd.notna(latest_year)
-            and pd.notna(previous_year)
-        ):
+        if pd.notna(latest_year) and pd.notna(previous_year):
             comparison_text = (
-                f"Trend comparison: {int(latest_year)} "
-                f"vs {int(previous_year)}"
+                f"Trend comparison: {int(latest_year)} " f"vs {int(previous_year)}"
             )
         else:
             comparison_text = (
@@ -767,6 +728,7 @@ def build_portfolio_pdf(df):
 # MAIN
 # ============================================================
 
+
 def main():
     print("========================================")
     print("PORTFOLIO SUMMARY GENERATOR")
@@ -775,30 +737,23 @@ def main():
     print("\nLoading database:", DATABASE)
 
     if not os.path.exists(DATABASE):
-        raise FileNotFoundError(
-            f"Database not found: {DATABASE}"
-        )
+        raise FileNotFoundError(f"Database not found: {DATABASE}")
 
     df = load_data()
 
     validate_data(df)
 
     print(
-        f"\nTrend basis: exact latest year vs "
-        f"exactly {TREND_YEARS} years earlier"
+        f"\nTrend basis: exact latest year vs " f"exactly {TREND_YEARS} years earlier"
     )
 
-    print(
-        f"Stable band: ±{STABLE_BAND_PCT:g}%"
-    )
+    print(f"Stable band: ±{STABLE_BAND_PCT:g}%")
 
     print("\nGenerating PDF...")
 
     build_portfolio_pdf(df)
 
-    file_size_kb = (
-        os.path.getsize(OUTPUT_FILE) / 1024
-    )
+    file_size_kb = os.path.getsize(OUTPUT_FILE) / 1024
 
     print("\n========================================")
     print("PORTFOLIO SUMMARY COMPLETE")

@@ -1,4 +1,5 @@
 import sqlite3
+
 import pandas as pd
 
 conn = sqlite3.connect("db/nifty100.db")
@@ -9,10 +10,7 @@ print("=" * 70)
 
 print("\nDATABASE TABLES\n")
 
-tables = pd.read_sql(
-    "SELECT name FROM sqlite_master WHERE type='table';",
-    conn
-)
+tables = pd.read_sql("SELECT name FROM sqlite_master WHERE type='table';", conn)
 
 print(tables)
 
@@ -33,17 +31,14 @@ ratios = pd.read_sql(
     FROM financial_ratios
     LIMIT 10
     """,
-    conn
+    conn,
 )
 
 print(ratios)
 
 print("\n" + "=" * 70)
 
-row_count = pd.read_sql(
-    "SELECT COUNT(*) AS total FROM financial_ratios",
-    conn
-)
+row_count = pd.read_sql("SELECT COUNT(*) AS total FROM financial_ratios", conn)
 
 print("\nTOTAL ROWS\n")
 print(row_count)

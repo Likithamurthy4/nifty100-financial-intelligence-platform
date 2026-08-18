@@ -7,8 +7,8 @@ Professional SQLite Loader
 import sqlite3
 from pathlib import Path
 
-from etl.loader import load_all_datasets
 from etl.audit import AuditLogger
+from etl.loader import load_all_datasets
 
 DATABASE = Path("db/nifty100.db")
 
@@ -25,21 +25,11 @@ class DatabaseLoader:
 
         df = self.datasets["companies"]
 
-        df.to_sql(
-            "companies",
-            self.conn,
-            if_exists="append",
-            index=False
-        )
+        df.to_sql("companies", self.conn, if_exists="append", index=False)
 
         self.company_ids = set(df["id"])
 
-        self.audit.add(
-            "companies",
-            len(df),
-            0,
-            "SUCCESS"
-        )
+        self.audit.add("companies", len(df), 0, "SUCCESS")
 
         print(f"companies            Loaded={len(df)} Rejected=0")
 
@@ -62,25 +52,11 @@ class DatabaseLoader:
 
         cleaned_df, rejected = self.remove_invalid_fk(df)
 
-        cleaned_df.to_sql(
-            table_name,
-            self.conn,
-            if_exists="append",
-            index=False
-        )
+        cleaned_df.to_sql(table_name, self.conn, if_exists="append", index=False)
 
-        self.audit.add(
-            table_name,
-            len(cleaned_df),
-            rejected,
-            "SUCCESS"
-        )
+        self.audit.add(table_name, len(cleaned_df), rejected, "SUCCESS")
 
-        print(
-            f"{table_name:<20}"
-            f" Loaded={len(cleaned_df)} "
-            f"Rejected={rejected}"
-        )
+        print(f"{table_name:<20}" f" Loaded={len(cleaned_df)} " f"Rejected={rejected}")
 
     def run(self):
 
@@ -101,7 +77,7 @@ class DatabaseLoader:
             "stock_prices",
             "market_cap",
             "financial_ratios",
-            "peer_groups"
+            "peer_groups",
         ]
 
         for table in load_order:

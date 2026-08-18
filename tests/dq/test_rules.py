@@ -1,7 +1,6 @@
 import pandas as pd
 
 from src.etl.validator import (
-    validation_errors,
     dq01_primary_key,
     dq02_company_year,
     dq03_foreign_key,
@@ -16,6 +15,7 @@ from src.etl.validator import (
     dq12_market_cap,
     dq13_debt,
     dq14_missing,
+    validation_errors,
 )
 
 
@@ -25,11 +25,7 @@ def setup_function():
 
 
 def assert_rule(rule_id, severity):
-    matches = [
-        error
-        for error in validation_errors
-        if error["Rule"] == rule_id
-    ]
+    matches = [error for error in validation_errors if error["Rule"] == rule_id]
 
     assert len(matches) > 0
     assert all(error["Severity"] == severity for error in matches)
@@ -39,11 +35,14 @@ def assert_rule(rule_id, severity):
 # DQ-01 PRIMARY KEY
 # ============================================================
 
+
 def test_dq01_primary_key():
-    df = pd.DataFrame({
-        "id": [1, 1],
-        "company_id": ["ABB", "ABB"],
-    })
+    df = pd.DataFrame(
+        {
+            "id": [1, 1],
+            "company_id": ["ABB", "ABB"],
+        }
+    )
 
     dq01_primary_key(df, "companies")
 
@@ -54,11 +53,14 @@ def test_dq01_primary_key():
 # DQ-02 COMPANY + YEAR
 # ============================================================
 
+
 def test_dq02_company_year():
-    df = pd.DataFrame({
-        "company_id": ["ABB", "ABB"],
-        "year": [2024, 2024],
-    })
+    df = pd.DataFrame(
+        {
+            "company_id": ["ABB", "ABB"],
+            "year": [2024, 2024],
+        }
+    )
 
     dq02_company_year(df, "financial_ratios")
 
@@ -69,14 +71,19 @@ def test_dq02_company_year():
 # DQ-03 FOREIGN KEY
 # ============================================================
 
-def test_dq03_foreign_key():
-    df = pd.DataFrame({
-        "company_id": ["NOTREAL"],
-    })
 
-    companies = pd.DataFrame({
-        "id": ["ABB", "TCS"],
-    })
+def test_dq03_foreign_key():
+    df = pd.DataFrame(
+        {
+            "company_id": ["NOTREAL"],
+        }
+    )
+
+    companies = pd.DataFrame(
+        {
+            "id": ["ABB", "TCS"],
+        }
+    )
 
     dq03_foreign_key(
         df,
@@ -91,11 +98,14 @@ def test_dq03_foreign_key():
 # DQ-04 BALANCE SHEET
 # ============================================================
 
+
 def test_dq04_balance_sheet():
-    df = pd.DataFrame({
-        "total_assets": [100],
-        "total_liabilities": [50],
-    })
+    df = pd.DataFrame(
+        {
+            "total_assets": [100],
+            "total_liabilities": [50],
+        }
+    )
 
     dq04_balance_sheet(df)
 
@@ -106,12 +116,15 @@ def test_dq04_balance_sheet():
 # DQ-05 OPM
 # ============================================================
 
+
 def test_dq05_opm():
-    df = pd.DataFrame({
-        "sales": [100],
-        "operating_profit": [50],
-        "opm_percentage": [10],
-    })
+    df = pd.DataFrame(
+        {
+            "sales": [100],
+            "operating_profit": [50],
+            "opm_percentage": [10],
+        }
+    )
 
     dq05_opm(df)
 
@@ -122,10 +135,13 @@ def test_dq05_opm():
 # DQ-06 SALES
 # ============================================================
 
+
 def test_dq06_sales():
-    df = pd.DataFrame({
-        "sales": [-100],
-    })
+    df = pd.DataFrame(
+        {
+            "sales": [-100],
+        }
+    )
 
     dq06_sales(df)
 
@@ -136,13 +152,16 @@ def test_dq06_sales():
 # DQ-07 CASH FLOW
 # ============================================================
 
+
 def test_dq07_cashflow():
-    df = pd.DataFrame({
-        "operating_activity": [100],
-        "investing_activity": [50],
-        "financing_activity": [25],
-        "net_cash_flow": [999],
-    })
+    df = pd.DataFrame(
+        {
+            "operating_activity": [100],
+            "investing_activity": [50],
+            "financing_activity": [25],
+            "net_cash_flow": [999],
+        }
+    )
 
     dq07_cashflow(df)
 
@@ -153,10 +172,13 @@ def test_dq07_cashflow():
 # DQ-08 TAX
 # ============================================================
 
+
 def test_dq08_tax():
-    df = pd.DataFrame({
-        "tax_percentage": [150],
-    })
+    df = pd.DataFrame(
+        {
+            "tax_percentage": [150],
+        }
+    )
 
     dq08_tax(df)
 
@@ -167,10 +189,13 @@ def test_dq08_tax():
 # DQ-09 DIVIDEND
 # ============================================================
 
+
 def test_dq09_dividend():
-    df = pd.DataFrame({
-        "dividend_payout": [-10],
-    })
+    df = pd.DataFrame(
+        {
+            "dividend_payout": [-10],
+        }
+    )
 
     dq09_dividend(df)
 
@@ -181,11 +206,14 @@ def test_dq09_dividend():
 # DQ-10 EPS
 # ============================================================
 
+
 def test_dq10_eps():
-    df = pd.DataFrame({
-        "net_profit": [100],
-        "eps": [0],
-    })
+    df = pd.DataFrame(
+        {
+            "net_profit": [100],
+            "eps": [0],
+        }
+    )
 
     dq10_eps(df)
 
@@ -196,10 +224,13 @@ def test_dq10_eps():
 # DQ-11 DOCUMENT
 # ============================================================
 
+
 def test_dq11_document():
-    df = pd.DataFrame({
-        "Annual_Report": [""],
-    })
+    df = pd.DataFrame(
+        {
+            "Annual_Report": [""],
+        }
+    )
 
     dq11_document(df)
 
@@ -210,10 +241,13 @@ def test_dq11_document():
 # DQ-12 MARKET CAP
 # ============================================================
 
+
 def test_dq12_market_cap():
-    df = pd.DataFrame({
-        "market_cap_crore": [0],
-    })
+    df = pd.DataFrame(
+        {
+            "market_cap_crore": [0],
+        }
+    )
 
     dq12_market_cap(df)
 
@@ -224,10 +258,13 @@ def test_dq12_market_cap():
 # DQ-13 DEBT
 # ============================================================
 
+
 def test_dq13_debt():
-    df = pd.DataFrame({
-        "debt_to_equity": [-1],
-    })
+    df = pd.DataFrame(
+        {
+            "debt_to_equity": [-1],
+        }
+    )
 
     dq13_debt(df)
 
@@ -238,11 +275,14 @@ def test_dq13_debt():
 # DQ-14 MISSING MANDATORY VALUES
 # ============================================================
 
+
 def test_dq14_missing():
-    df = pd.DataFrame({
-        "id": [None],
-        "company_id": ["ABB"],
-    })
+    df = pd.DataFrame(
+        {
+            "id": [None],
+            "company_id": ["ABB"],
+        }
+    )
 
     dq14_missing(df, "companies")
 

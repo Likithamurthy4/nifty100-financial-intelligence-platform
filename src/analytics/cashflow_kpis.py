@@ -1,8 +1,8 @@
 import os
 import sqlite3
-import pandas as pd
-import numpy as np
 
+import numpy as np
+import pandas as pd
 
 DATABASE = "db/nifty100.db"
 
@@ -31,7 +31,7 @@ class CashFlowIntelligence:
             FROM cashflow
             ORDER BY company_id, year
             """,
-            self.conn
+            self.conn,
         )
 
         pl = pd.read_sql(
@@ -44,7 +44,7 @@ class CashFlowIntelligence:
             FROM profitandloss
             ORDER BY company_id, year
             """,
-            self.conn
+            self.conn,
         )
 
         companies = pd.read_sql(
@@ -54,7 +54,7 @@ class CashFlowIntelligence:
                 company_name
             FROM companies
             """,
-            self.conn
+            self.conn,
         )
 
         sectors = pd.read_sql(
@@ -62,7 +62,7 @@ class CashFlowIntelligence:
             SELECT *
             FROM sectors
             """,
-            self.conn
+            self.conn,
         )
 
         return cashflow, pl, companies, sectors
@@ -74,22 +74,15 @@ class CashFlowIntelligence:
     def cfo_quality(self, company_cashflow, company_pl):
 
         merged = company_cashflow.merge(
-            company_pl[
-                [
-                    "company_id",
-                    "year",
-                    "net_profit"
-                ]
-            ],
+            company_pl[["company_id", "year", "net_profit"]],
             on=["company_id", "year"],
-            how="left"
+            how="left",
         )
 
         merged["cfo_pat_ratio"] = np.where(
             merged["net_profit"].abs() > 0,
-            merged["operating_activity"] /
-            merged["net_profit"].abs(),
-            np.nan
+            merged["operating_activity"] / merged["net_profit"].abs(),
+            np.nan,
         )
 
         latest_5 = merged.tail(5)
@@ -114,22 +107,12 @@ class CashFlowIntelligence:
     # CapEx Intensity
     # ==========================================================
 
-    def capex_intensity(
-        self,
-        company_cashflow,
-        company_pl
-    ):
+    def capex_intensity(self, company_cashflow, company_pl):
 
         merged = company_cashflow.merge(
-            company_pl[
-                [
-                    "company_id",
-                    "year",
-                    "sales"
-                ]
-            ],
+            company_pl[["company_id", "year", "sales"]],
             on=["company_id", "year"],
-            how="left"
+            how="left",
         )
 
         latest = merged.iloc[-1]
@@ -137,17 +120,11 @@ class CashFlowIntelligence:
         sales = latest["sales"]
         investing = latest["investing_activity"]
 
-        if (
-            pd.isna(sales)
-            or sales == 0
-        ):
+        if pd.isna(sales) or sales == 0:
             intensity = np.nan
 
         else:
-            intensity = (
-                abs(investing) /
-                abs(sales)
-            ) * 100
+            intensity = (abs(investing) / abs(sales)) * 100
 
         if pd.isna(intensity):
             label = "Insufficient Data"
@@ -171,14 +148,9 @@ class CashFlowIntelligence:
 
         df = company_cashflow.copy()
 
-        df["fcf"] = (
-            df["operating_activity"]
-            + df["investing_activity"]
-        )
+        df["fcf"] = df["operating_activity"] + df["investing_activity"]
 
-        df = df.dropna(
-            subset=["fcf"]
-        )
+        df = df.dropna(subset=["fcf"])
 
         if len(df) < 2:
             return np.nan
@@ -186,116 +158,66 @@ class CashFlowIntelligence:
         first = df.iloc[0]["fcf"]
         last = df.iloc[-1]["fcf"]
 
-        if (
-            first <= 0
-            or last <= 0
-        ):
+        if first <= 0 or last <= 0:
             return np.nan
 
-        years = (
-            df.iloc[-1]["year"]
-            - df.iloc[0]["year"]
-        )
+        years = df.iloc[-1]["year"] - df.iloc[0]["year"]
 
         if years <= 0:
             return np.nan
 
-        return (
-            (
-                last / first
-            ) ** (1 / years)
-            - 1
-        ) * 100
+        return ((last / first) ** (1 / years) - 1) * 100
 
     # ==========================================================
     # FCF Conversion
     # ==========================================================
 
-    def fcf_conversion(
-        self,
-        company_cashflow,
-        company_pl
-    ):
+    def fcf_conversion(self, company_cashflow, company_pl):
 
         merged = company_cashflow.merge(
-            company_pl[
-                [
-                    "company_id",
-                    "year",
-                    "net_profit"
-                ]
-            ],
+            company_pl[["company_id", "year", "net_profit"]],
             on=["company_id", "year"],
-            how="left"
+            how="left",
         )
 
         latest = merged.iloc[-1]
 
-        fcf = (
-            latest["operating_activity"]
-            + latest["investing_activity"]
-        )
+        fcf = latest["operating_activity"] + latest["investing_activity"]
 
         pat = latest["net_profit"]
 
-        if (
-            pd.isna(pat)
-            or pat == 0
-        ):
+        if pd.isna(pat) or pat == 0:
             return np.nan
 
-        return (
-            fcf / abs(pat)
-        ) * 100
+        return (fcf / abs(pat)) * 100
 
     # ==========================================================
     # Distress signal
     # ==========================================================
 
-    def distress_signal(
-        self,
-        company_cashflow
-    ):
+    def distress_signal(self, company_cashflow):
 
         latest = company_cashflow.iloc[-1]
 
-        cfo = latest[
-            "operating_activity"
-        ]
+        cfo = latest["operating_activity"]
 
-        cff = latest[
-            "financing_activity"
-        ]
+        cff = latest["financing_activity"]
 
-        return (
-            pd.notna(cfo)
-            and pd.notna(cff)
-            and cfo < 0
-            and cff > 0
-        )
+        return pd.notna(cfo) and pd.notna(cff) and cfo < 0 and cff > 0
 
     # ==========================================================
     # Capital allocation label
     # ==========================================================
 
-    def capital_allocation(
-        self,
-        company_cashflow
-    ):
+    def capital_allocation(self, company_cashflow):
 
         latest = company_cashflow.iloc[-1]
 
-        cfo = latest[
-            "operating_activity"
-        ]
+        cfo = latest["operating_activity"]
 
-        cfi = latest[
-            "investing_activity"
-        ]
+        cfi = latest["investing_activity"]
 
-        cff = latest[
-            "financing_activity"
-        ]
+        cff = latest["financing_activity"]
 
         if pd.isna(cfo):
             return "Unknown"
@@ -326,130 +248,69 @@ class CashFlowIntelligence:
 
     def generate(self):
 
-        (
-            cashflow,
-            pl,
-            companies,
-            sectors
-        ) = self.load_data()
+        cashflow, pl, companies, sectors = self.load_data()
 
         results = []
 
         distress_results = []
 
-        for company_id in companies[
-            "company_id"
-        ]:
+        for company_id in companies["company_id"]:
 
-            cf = cashflow[
-                cashflow["company_id"]
-                == company_id
-            ].copy()
+            cf = cashflow[cashflow["company_id"] == company_id].copy()
 
-            company_pl = pl[
-                pl["company_id"]
-                == company_id
-            ].copy()
+            company_pl = pl[pl["company_id"] == company_id].copy()
 
             if cf.empty:
 
-                sector_row = sectors[
-                    sectors["company_id"] == company_id
-                ]
+                sector_row = sectors[sectors["company_id"] == company_id]
 
                 sector = "Unknown"
 
-                if (
-                    not sector_row.empty
-                    and "broad_sector" in sector_row.columns
-                ):
+                if not sector_row.empty and "broad_sector" in sector_row.columns:
                     sector = sector_row.iloc[0]["broad_sector"]
 
-                results.append({
-
-                    "company_id": company_id,
-
-                    "sector": sector,
-
-                    "cfo_quality_score": np.nan,
-
-                    "cfo_quality_label": "Insufficient Data",
-
-                    "capex_intensity_pct": np.nan,
-
-                    "capex_label": "Insufficient Data",
-
-                    "fcf_cagr_5yr": np.nan,
-
-                    "fcf_conversion_pct": np.nan,
-
-                    "distress_flag": False,
-
-                    "deleveraging_flag": False,
-
-                    "capital_allocation_label": "Insufficient Data"
-
-                })
+                results.append(
+                    {
+                        "company_id": company_id,
+                        "sector": sector,
+                        "cfo_quality_score": np.nan,
+                        "cfo_quality_label": "Insufficient Data",
+                        "capex_intensity_pct": np.nan,
+                        "capex_label": "Insufficient Data",
+                        "fcf_cagr_5yr": np.nan,
+                        "fcf_conversion_pct": np.nan,
+                        "distress_flag": False,
+                        "deleveraging_flag": False,
+                        "capital_allocation_label": "Insufficient Data",
+                    }
+                )
 
                 continue
 
             cf = cf.sort_values("year")
 
-            company_pl = company_pl.sort_values(
-                "year"
-            )
+            company_pl = company_pl.sort_values("year")
 
             latest = cf.iloc[-1]
 
-            (
-                cfo_score,
-                cfo_label,
-                merged
-            ) = self.cfo_quality(
-                cf,
-                company_pl
-            )
+            cfo_score, cfo_label, _ = self.cfo_quality(cf, company_pl)
 
-            (
-                capex_pct,
-                capex_label
-            ) = self.capex_intensity(
-                cf,
-                company_pl
-            )
+            capex_pct, capex_label = self.capex_intensity(cf, company_pl)
 
-            fcf_cagr = self.fcf_cagr(
-                cf
-            )
+            fcf_cagr = self.fcf_cagr(cf)
 
-            fcf_conversion = self.fcf_conversion(
-                cf,
-                company_pl
-            )
+            fcf_conversion = self.fcf_conversion(cf, company_pl)
 
-            distress = self.distress_signal(
-                cf
-            )
+            distress = self.distress_signal(cf)
 
-            allocation = self.capital_allocation(
-                cf
-            )
+            allocation = self.capital_allocation(cf)
 
-            sector_row = sectors[
-                sectors["company_id"]
-                == company_id
-            ]
+            sector_row = sectors[sectors["company_id"] == company_id]
 
             sector = "Unknown"
 
-            if (
-                not sector_row.empty
-                and "broad_sector"
-                in sector_row.columns
-            ):
-                sector = sector_row.iloc[0][
-                    "broad_sector"
-                ]
+            if not sector_row.empty and "broad_sector" in sector_row.columns:
+                sector = sector_row.iloc[0]["broad_sector"]
 
             # --------------------------------------------------
             # Deleveraging
@@ -470,7 +331,7 @@ class CashFlowIntelligence:
                     ORDER BY year
                     """,
                     self.conn,
-                    params=[company_id]
+                    params=[company_id],
                 )
 
                 borrowing_column = None
@@ -479,35 +340,24 @@ class CashFlowIntelligence:
                     "borrowings",
                     "borrowings_cr",
                     "total_debt",
-                    "total_debt_cr"
+                    "total_debt_cr",
                 ]:
 
                     if column in bs.columns:
                         borrowing_column = column
                         break
 
-                if (
-                    borrowing_column
-                    and len(bs) >= 2
-                ):
+                if borrowing_column and len(bs) >= 2:
 
                     previous = pd.to_numeric(
-                        bs.iloc[-2][
-                            borrowing_column
-                        ],
-                        errors="coerce"
+                        bs.iloc[-2][borrowing_column], errors="coerce"
                     )
 
                     current = pd.to_numeric(
-                        bs.iloc[-1][
-                            borrowing_column
-                        ],
-                        errors="coerce"
+                        bs.iloc[-1][borrowing_column], errors="coerce"
                     )
 
-                    cff = latest[
-                        "financing_activity"
-                    ]
+                    cff = latest["financing_activity"]
 
                     deleveraging = (
                         pd.notna(previous)
@@ -517,44 +367,21 @@ class CashFlowIntelligence:
                         and cff < 0
                     )
 
-            except Exception:
+            except (ValueError, TypeError):
                 deleveraging = False
 
             row = {
-
-                "company_id":
-                    company_id,
-
-                "sector":
-                    sector,
-
-                "cfo_quality_score":
-                    cfo_score,
-
-                "cfo_quality_label":
-                    cfo_label,
-
-                "capex_intensity_pct":
-                    capex_pct,
-
-                "capex_label":
-                    capex_label,
-
-                "fcf_cagr_5yr":
-                    fcf_cagr,
-
-                "fcf_conversion_pct":
-                    fcf_conversion,
-
-                "distress_flag":
-                    distress,
-
-                "deleveraging_flag":
-                    deleveraging,
-
-                "capital_allocation_label":
-                    allocation
-
+                "company_id": company_id,
+                "sector": sector,
+                "cfo_quality_score": cfo_score,
+                "cfo_quality_label": cfo_label,
+                "capex_intensity_pct": capex_pct,
+                "capex_label": capex_label,
+                "fcf_cagr_5yr": fcf_cagr,
+                "fcf_conversion_pct": fcf_conversion,
+                "distress_flag": distress,
+                "deleveraging_flag": deleveraging,
+                "capital_allocation_label": allocation,
             }
 
             results.append(row)
@@ -563,36 +390,19 @@ class CashFlowIntelligence:
 
                 latest_pl = company_pl.iloc[-1]
 
-                distress_results.append({
-
-                    "company_id":
-                        company_id,
-
-                    "sector":
-                        sector,
-
-                    "cfo":
-                        latest[
-                            "operating_activity"
-                        ],
-
-                    "cff":
-                        latest[
-                            "financing_activity"
-                        ],
-
-                    "latest_net_profit":
-                        latest_pl[
-                            "net_profit"
-                        ]
-
-                })
+                distress_results.append(
+                    {
+                        "company_id": company_id,
+                        "sector": sector,
+                        "cfo": latest["operating_activity"],
+                        "cff": latest["financing_activity"],
+                        "latest_net_profit": latest_pl["net_profit"],
+                    }
+                )
 
         result = pd.DataFrame(results)
 
-        distress_df = pd.DataFrame(
-            distress_results
-        )
+        distress_df = pd.DataFrame(distress_results)
 
         return result, distress_df
 
@@ -604,42 +414,21 @@ class CashFlowIntelligence:
 
         result, distress = self.generate()
 
-        os.makedirs(
-            "output",
-            exist_ok=True
-        )
+        os.makedirs("output", exist_ok=True)
 
-        result.to_excel(
-            "output/cashflow_intelligence.xlsx",
-            index=False
-        )
+        result.to_excel("output/cashflow_intelligence.xlsx", index=False)
 
-        distress.to_csv(
-            "output/distress_alerts.csv",
-            index=False
-        )
+        distress.to_csv("output/distress_alerts.csv", index=False)
 
-        print(
-            "Cash Flow Intelligence rows:",
-            len(result)
-        )
+        print("Cash Flow Intelligence rows:", len(result))
 
-        print(
-            "Distress alerts:",
-            len(distress)
-        )
+        print("Distress alerts:", len(distress))
 
         print()
 
-        print(
-            "Saved:",
-            "output/cashflow_intelligence.xlsx"
-        )
+        print("Saved:", "output/cashflow_intelligence.xlsx")
 
-        print(
-            "Saved:",
-            "output/distress_alerts.csv"
-        )
+        print("Saved:", "output/distress_alerts.csv")
 
         return result
 

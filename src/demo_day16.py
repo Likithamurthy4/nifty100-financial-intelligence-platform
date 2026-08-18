@@ -8,7 +8,7 @@ presets = [
     "growth_accelerator",
     "dividend_champion",
     "debt_free_blue_chip",
-    "turnaround_watch"
+    "turnaround_watch",
 ]
 
 for preset in presets:
@@ -19,12 +19,6 @@ for preset in presets:
 
     result = engine.apply_filters(preset)
 
-    print(result[
-        [
-            "company_name",
-            "year",
-            "composite_quality_score"
-        ]
-    ].head(10))
+    print(result[["company_name", "year", "composite_quality_score"]].head(10))
 
     print(f"\nCompanies Returned : {len(result)}")

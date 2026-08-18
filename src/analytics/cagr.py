@@ -26,9 +26,7 @@ def calculate_cagr(start, end, years):
     # Edge Case 1
     if start > 0 and end > 0:
 
-        cagr = (
-            pow(end / start, 1 / years) - 1
-        ) * 100
+        cagr = (pow(end / start, 1 / years) - 1) * 100
 
         return round(cagr, 2), "NORMAL"
 

@@ -15,7 +15,7 @@ tables = [
     "stock_prices",
     "market_cap",
     "financial_ratios",
-    "peer_groups"
+    "peer_groups",
 ]
 
 print("\n===== DATABASE ROW COUNTS =====\n")

@@ -1,13 +1,10 @@
 import sqlite3
+
 import pandas as pd
 
 conn = sqlite3.connect("db/nifty100.db")
 
-tables = [
-    "financial_ratios",
-    "profitandloss",
-    "market_cap"
-]
+tables = ["financial_ratios", "profitandloss", "market_cap"]
 
 for table in tables:
     print(f"\n===== {table} =====")

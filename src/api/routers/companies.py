@@ -1,10 +1,8 @@
 import sqlite3
 from pathlib import Path
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
-
 
 router = APIRouter()
 
@@ -24,6 +22,7 @@ TEARSHEET_DIR = BASE_DIR / "reports" / "tearsheets"
 # DATABASE CONNECTION
 # ============================================================
 
+
 def get_db_connection():
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
@@ -34,12 +33,13 @@ def get_db_connection():
 # HELPERS
 # ============================================================
 
+
 def rows_to_dict(rows):
     """Convert SQLite rows to normal dictionaries."""
     return [dict(row) for row in rows]
 
 
-def parse_year(value: Optional[str]):
+def parse_year(value: str | None):
     """
     Convert YYYY-MM query parameter to an integer year.
 
@@ -70,8 +70,8 @@ def parse_year(value: Optional[str]):
 
 
 def validate_year_range(
-    from_year: Optional[str],
-    to_year: Optional[str],
+    from_year: str | None,
+    to_year: str | None,
 ):
     start = parse_year(from_year)
     end = parse_year(to_year)
@@ -112,17 +112,18 @@ def get_company(ticker: str):
 # GET ALL COMPANIES
 # ============================================================
 
+
 @router.get("/companies")
 def get_companies(
-    sector: Optional[str] = Query(
+    sector: str | None = Query(
         None,
         description="Filter by broad sector",
     ),
-    market_cap_category: Optional[str] = Query(
+    market_cap_category: str | None = Query(
         None,
         description="Filter by market cap category",
     ),
-    search: Optional[str] = Query(
+    search: str | None = Query(
         None,
         description="Partial company name or ticker search",
     ),
@@ -177,9 +178,7 @@ def get_companies(
 
             search_value = f"%{search}%"
 
-            parameters.extend(
-                [search_value, search_value]
-            )
+            parameters.extend([search_value, search_value])
 
         query += """
             ORDER BY c.id
@@ -202,6 +201,7 @@ def get_companies(
 # ============================================================
 # GET COMPANY PROFILE
 # ============================================================
+
 
 @router.get("/companies/{ticker}")
 def get_company_profile(ticker: str):
@@ -245,11 +245,7 @@ def get_company_profile(ticker: str):
             (ticker,),
         ).fetchone()
 
-        sector_data = (
-            dict(sector)
-            if sector
-            else None
-        )
+        sector_data = dict(sector) if sector else None
 
         latest_kpis = connection.execute(
             """
@@ -263,11 +259,7 @@ def get_company_profile(ticker: str):
             (ticker,),
         ).fetchone()
 
-        latest_kpi_data = (
-            dict(latest_kpis)
-            if latest_kpis
-            else None
-        )
+        latest_kpi_data = dict(latest_kpis) if latest_kpis else None
 
         return {
             "company": company_data,
@@ -283,14 +275,15 @@ def get_company_profile(ticker: str):
 # GET PROFIT & LOSS HISTORY
 # ============================================================
 
+
 @router.get("/companies/{ticker}/pl")
 def get_company_pl(
     ticker: str,
-    from_year: Optional[str] = Query(
+    from_year: str | None = Query(
         None,
         description="Start year in YYYY-MM format",
     ),
-    to_year: Optional[str] = Query(
+    to_year: str | None = Query(
         None,
         description="End year in YYYY-MM format",
     ),
@@ -352,14 +345,15 @@ def get_company_pl(
 # GET BALANCE SHEET HISTORY
 # ============================================================
 
+
 @router.get("/companies/{ticker}/bs")
 def get_company_bs(
     ticker: str,
-    from_year: Optional[str] = Query(
+    from_year: str | None = Query(
         None,
         description="Start year in YYYY-MM format",
     ),
-    to_year: Optional[str] = Query(
+    to_year: str | None = Query(
         None,
         description="End year in YYYY-MM format",
     ),
@@ -421,14 +415,15 @@ def get_company_bs(
 # GET CASH FLOW HISTORY
 # ============================================================
 
+
 @router.get("/companies/{ticker}/cashflow")
 def get_company_cashflow(
     ticker: str,
-    from_year: Optional[str] = Query(
+    from_year: str | None = Query(
         None,
         description="Start year in YYYY-MM format",
     ),
-    to_year: Optional[str] = Query(
+    to_year: str | None = Query(
         None,
         description="End year in YYYY-MM format",
     ),
@@ -490,10 +485,11 @@ def get_company_cashflow(
 # GET FINANCIAL RATIOS
 # ============================================================
 
+
 @router.get("/companies/{ticker}/ratios")
 def get_company_ratios(
     ticker: str,
-    year: Optional[int] = Query(
+    year: int | None = Query(
         None,
         description="Optional financial year",
     ),
@@ -549,6 +545,7 @@ def get_company_ratios(
 # GET COMPANY TEARSHEET
 # ============================================================
 
+
 @router.get("/companies/{ticker}/tearsheet")
 def get_company_tearsheet(ticker: str):
     """
@@ -565,10 +562,7 @@ def get_company_tearsheet(ticker: str):
 
     normalized_ticker = ticker.upper()
 
-    pdf_path = (
-        TEARSHEET_DIR
-        / f"{normalized_ticker}_tearsheet.pdf"
-    )
+    pdf_path = TEARSHEET_DIR / f"{normalized_ticker}_tearsheet.pdf"
 
     if not pdf_path.exists():
         raise HTTPException(

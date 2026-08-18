@@ -1,10 +1,6 @@
-import streamlit as st
 import plotly.express as px
-
-from utils.db import (
-    get_sectors,
-    get_sector_data
-)
+import streamlit as st
+from utils.db import get_sector_data, get_sectors
 
 
 def show():
@@ -14,15 +10,7 @@ def show():
     sectors = get_sectors()
 
     sector = st.selectbox(
-
-        "Select Sector",
-
-        sorted(
-
-            sectors["broad_sector"].dropna().unique()
-
-        )
-
+        "Select Sector", sorted(sectors["broad_sector"].dropna().unique())
     )
 
     df = get_sector_data(sector)
@@ -36,69 +24,25 @@ def show():
     st.subheader("Sector Bubble Chart")
 
     fig = px.scatter(
-
         df,
-
         x="sales",
-
         y="return_on_equity_pct",
-
         size="market_cap_crore",
-
         color="sub_sector",
-
         hover_name="company_name",
-
-        size_max=60
-
+        size_max=60,
     )
 
-    st.plotly_chart(
-
-        fig,
-
-        use_container_width=True
-
-    )
+    st.plotly_chart(fig, use_container_width=True)
 
     st.divider()
 
     st.subheader("Sector Median KPIs")
 
     median = df[
-
-        [
-
-            "return_on_equity_pct",
-
-            "revenue_cagr_5yr",
-
-            "composite_quality_score"
-
-        ]
-
+        ["return_on_equity_pct", "revenue_cagr_5yr", "composite_quality_score"]
     ].median()
 
-    fig = px.bar(
+    fig = px.bar(x=median.index, y=median.values, labels={"x": "Metric", "y": "Median"})
 
-        x=median.index,
-
-        y=median.values,
-
-        labels={
-
-            "x":"Metric",
-
-            "y":"Median"
-
-        }
-
-    )
-
-    st.plotly_chart(
-
-        fig,
-
-        use_container_width=True
-
-    )
+    st.plotly_chart(fig, use_container_width=True)

@@ -1,8 +1,8 @@
 import os
 import re
 import sqlite3
-import pandas as pd
 
+import pandas as pd
 
 DATABASE = "db/nifty100.db"
 
@@ -14,17 +14,13 @@ class AnalysisParser:
         self.conn = sqlite3.connect(DATABASE)
 
         self.pattern = re.compile(
-            r"(?:(\d+)\s*Years?|(\d+)\s*Year|Last\s*Year|TTM)"
-            r"\s*:?\s*(-?[\d.]+)%",
-            re.IGNORECASE
+            r"(?:(\d+)\s*Years?|(\d+)\s*Year|Last\s*Year|TTM)" r"\s*:?\s*(-?[\d.]+)%",
+            re.IGNORECASE,
         )
 
     def load(self):
 
-        return pd.read_sql(
-            "SELECT * FROM analysis",
-            self.conn
-        )
+        return pd.read_sql("SELECT * FROM analysis", self.conn)
 
     def parse(self):
 
@@ -35,12 +31,10 @@ class AnalysisParser:
         failures = []
 
         metrics = [
-
             "compounded_sales_growth",
             "compounded_profit_growth",
             "stock_price_cagr",
-            "roe"
-
+            "roe",
         ]
 
         for _, row in df.iterrows():
@@ -61,56 +55,32 @@ class AnalysisParser:
                         # Last Year / TTM
                         period = 1
 
-                    parsed.append({
-                        "company_id": company,
-                        "metric_type": metric,
-                        "period_years": int(period),
-                        "value_pct": float(match.group(3))
-                })
+                    parsed.append(
+                        {
+                            "company_id": company,
+                            "metric_type": metric,
+                            "period_years": int(period),
+                            "value_pct": float(match.group(3)),
+                        }
+                    )
 
                 else:
 
-                    failures.append({
+                    failures.append(
+                        {"company_id": company, "metric_type": metric, "text": text}
+                    )
 
-                        "company_id": company,
+        return (pd.DataFrame(parsed), pd.DataFrame(failures))
 
-                        "metric_type": metric,
-
-                        "text": text
-
-                    })
-
-        return (
-
-            pd.DataFrame(parsed),
-
-            pd.DataFrame(failures)
-
-        )
     def export(self):
 
         parsed, failures = self.parse()
 
-        os.makedirs(
-            "output",
-            exist_ok=True
-        )
+        os.makedirs("output", exist_ok=True)
 
-        parsed.to_csv(
+        parsed.to_csv("output/analysis_parsed.csv", index=False)
 
-            "output/analysis_parsed.csv",
-
-            index=False
-
-        )
-
-        failures.to_csv(
-
-            "output/parse_failures.csv",
-
-            index=False
-
-        )
+        failures.to_csv("output/parse_failures.csv", index=False)
 
         print()
 
@@ -119,6 +89,7 @@ class AnalysisParser:
         print("Failures :", len(failures))
 
         return parsed
+
     def close(self):
 
         self.conn.close()

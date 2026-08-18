@@ -1,8 +1,6 @@
 import requests
-import pandas as pd
 
 from src.dashboard.utils.db import get_screener_data
-
 
 API_URL = "http://127.0.0.1:8000/api/v1/screener"
 
@@ -36,13 +34,8 @@ def test_dashboard_screener_matches_api():
     api_data = response.json()
 
     # Compare company IDs
-    dashboard_ids = set(
-        dashboard_filtered["company_id"].astype(str)
-    )
+    dashboard_ids = set(dashboard_filtered["company_id"].astype(str))
 
-    api_ids = {
-        str(company["id"])
-        for company in api_data["companies"]
-    }
+    api_ids = {str(company["id"]) for company in api_data["companies"]}
 
     assert dashboard_ids == api_ids

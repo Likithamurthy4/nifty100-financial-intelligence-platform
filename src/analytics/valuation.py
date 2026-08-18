@@ -1,7 +1,7 @@
 import os
 import sqlite3
-import pandas as pd
 
+import pandas as pd
 
 DATABASE = "db/nifty100.db"
 
@@ -57,43 +57,24 @@ class Valuation:
         """
 
         return pd.read_sql(query, self.conn)
+
     def calculate(self):
 
         df = self.load_data()
 
-        df["fcf_yield_pct"] = (
-            df["free_cash_flow_cr"] /
-            df["market_cap_crore"]
-        ) * 100
+        df["fcf_yield_pct"] = (df["free_cash_flow_cr"] / df["market_cap_crore"]) * 100
 
         sector_pe = (
-
             df.groupby("broad_sector")["pe_ratio"]
-
             .median()
-
             .reset_index()
-
-            .rename(
-                columns={
-                    "pe_ratio": "sector_median_pe"
-                }
-            )
-
+            .rename(columns={"pe_ratio": "sector_median_pe"})
         )
 
-        df = df.merge(
-            sector_pe,
-            on="broad_sector"
-        )
+        df = df.merge(sector_pe, on="broad_sector")
 
-        df["pe_vs_sector_median_pct"] = (
+        df["pe_vs_sector_median_pct"] = (df["pe_ratio"] / df["sector_median_pe"]) * 100
 
-            df["pe_ratio"]
-
-            / df["sector_median_pe"]
-
-        ) * 100
         def valuation_flag(row):
 
             if row["pe_ratio"] > row["sector_median_pe"] * 1.5:
@@ -104,44 +85,36 @@ class Valuation:
 
             return "Fair"
 
-        df["flag"] = df.apply(
-            valuation_flag,
-            axis=1
-        )
+        df["flag"] = df.apply(valuation_flag, axis=1)
 
         return df
+
     def export(self, df):
 
-        os.makedirs(
-            "output",
-            exist_ok=True
-        )
+        os.makedirs("output", exist_ok=True)
 
-        export = df[[
-            "company_id",
-            "company_name",
-            "broad_sector",
-            "pe_ratio",
-            "pb_ratio",
-            "ev_ebitda",
-            "fcf_yield_pct",
-            "sector_median_pe",
-            "pe_vs_sector_median_pct",
-            "flag"
-        ]]
+        export = df[
+            [
+                "company_id",
+                "company_name",
+                "broad_sector",
+                "pe_ratio",
+                "pb_ratio",
+                "ev_ebitda",
+                "fcf_yield_pct",
+                "sector_median_pe",
+                "pe_vs_sector_median_pct",
+                "flag",
+            ]
+        ]
 
-        export.to_excel(
-            "output/valuation_summary.xlsx",
-            index=False
-        )
+        export.to_excel("output/valuation_summary.xlsx", index=False)
 
-        export[
-            export["flag"] != "Fair"
-        ].to_csv(
-            "output/valuation_flags.csv",
-            index=False
+        export[export["flag"] != "Fair"].to_csv(
+            "output/valuation_flags.csv", index=False
         )
 
         print("Valuation reports exported.")
+
     def close(self):
         self.conn.close()

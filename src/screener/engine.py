@@ -1,13 +1,11 @@
 import yaml
-import pandas as pd
 
 from screener.loader import ScreenerLoader
 
 
 class ScreenerEngine:
 
-    def __init__(self,
-                 config_path="config/screener_config.yaml"):
+    def __init__(self, config_path="config/screener_config.yaml"):
 
         with open(config_path, "r") as file:
             self.config = yaml.safe_load(file)
@@ -39,7 +37,7 @@ class ScreenerEngine:
             "pe_max": ("pe_ratio", "<="),
             "pb_max": ("pb_ratio", "<="),
             "dividend_yield_min": ("dividend_yield_pct", ">="),
-            "dividend_payout_max": ("dividend_payout_ratio_pct", "<=")
+            "dividend_payout_max": ("dividend_payout_ratio_pct", "<="),
         }
 
         # -------------------------
@@ -52,7 +50,7 @@ class ScreenerEngine:
                 "debt_to_equity_max",
                 "debt_to_equity_exact",
                 "debt_declining",
-                "icr_min"
+                "icr_min",
             ]:
                 continue
 
@@ -74,20 +72,11 @@ class ScreenerEngine:
 
             threshold = rules["debt_to_equity_max"]
 
-            financials = (
-                df["broad_sector"]
-                .fillna("")
-                .str.lower()
-                == "financials"
-            )
+            financials = df["broad_sector"].fillna("").str.lower() == "financials"
 
-            non_financial = (
-                df["debt_to_equity"] <= threshold
-            )
+            non_financial = df["debt_to_equity"] <= threshold
 
-            df = df[
-                financials | non_financial
-            ]
+            df = df[financials | non_financial]
 
         # -------------------------
         # Debt-to-Equity Exact
@@ -97,9 +86,7 @@ class ScreenerEngine:
 
             threshold = rules["debt_to_equity_exact"]
 
-            df = df[
-                df["debt_to_equity"].fillna(-999).round(2) == threshold
-            ]
+            df = df[df["debt_to_equity"].fillna(-999).round(2) == threshold]
 
         # -------------------------
         # Interest Coverage
@@ -110,17 +97,15 @@ class ScreenerEngine:
             threshold = rules["icr_min"]
 
             df = df[
-                (df["interest_coverage"].isna()) |
-                (df["interest_coverage"] >= threshold)
+                (df["interest_coverage"].isna())
+                | (df["interest_coverage"] >= threshold)
             ]
 
         # -------------------------
         # Latest Year Only
         # -------------------------
 
-        df = df.sort_values(
-            by=["company_id", "year"]
-        )
+        df = df.sort_values(by=["company_id", "year"])
 
         df = df.groupby("company_id").tail(1)
 
@@ -128,12 +113,6 @@ class ScreenerEngine:
         # Final Sort
         # -------------------------
 
-        df = df.sort_values(
-            by="composite_quality_score",
-            ascending=False
-        )
+        df = df.sort_values(by="composite_quality_score", ascending=False)
 
-        return df.sort_values(
-            by="composite_quality_score",
-            ascending=False
-        )
+        return df.sort_values(by="composite_quality_score", ascending=False)

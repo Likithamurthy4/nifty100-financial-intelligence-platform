@@ -170,10 +170,7 @@ def compare_company_peers(ticker: str):
         company_values = {}
 
         for row in company_rows:
-            if (
-                row["metric"] in metrics
-                and row["metric"] not in company_values
-            ):
+            if row["metric"] in metrics and row["metric"] not in company_values:
                 company_values[row["metric"]] = row["value"]
 
         peer_rows = conn.execute(
@@ -198,10 +195,7 @@ def compare_company_peers(ticker: str):
                 row["metric"],
             )
 
-            if (
-                row["metric"] in metrics
-                and key not in latest
-            ):
+            if row["metric"] in metrics and key not in latest:
                 latest[key] = row["value"]
 
         peer_average = {}
@@ -210,14 +204,11 @@ def compare_company_peers(ticker: str):
             values = [
                 value
                 for (company_id, metric_name), value in latest.items()
-                if metric_name == metric
-                and value is not None
+                if metric_name == metric and value is not None
             ]
 
             peer_average[metric] = (
-                round(sum(values) / len(values), 4)
-                if values
-                else None
+                round(sum(values) / len(values), 4) if values else None
             )
 
         benchmark = conn.execute(
@@ -253,10 +244,7 @@ def compare_company_peers(ticker: str):
             ).fetchall()
 
             for row in benchmark_rows:
-                if (
-                    row["metric"] in metrics
-                    and row["metric"] not in benchmark_values
-                ):
+                if row["metric"] in metrics and row["metric"] not in benchmark_values:
                     benchmark_values[row["metric"]] = row["value"]
 
         axes = []

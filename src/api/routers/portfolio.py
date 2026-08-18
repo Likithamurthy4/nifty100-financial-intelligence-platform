@@ -26,8 +26,7 @@ def get_portfolio_stats():
 
     try:
         # Latest year for each company
-        rows = conn.execute(
-            """
+        rows = conn.execute("""
             WITH latest_ratios AS (
                 SELECT *
                 FROM financial_ratios fr
@@ -49,8 +48,7 @@ def get_portfolio_stats():
                 pat_cagr_5yr,
                 eps_cagr_5yr
             FROM latest_ratios
-            """
-        ).fetchall()
+            """).fetchall()
 
         metrics = [
             "net_profit_margin_pct",
@@ -66,10 +64,7 @@ def get_portfolio_stats():
         ]
 
         # Convert SQLite rows into metric arrays
-        values = {
-            metric: []
-            for metric in metrics
-        }
+        values = {metric: [] for metric in metrics}
 
         for row in rows:
             for metric in metrics:
@@ -97,10 +92,7 @@ def get_portfolio_stats():
 
             fraction = position - lower
 
-            return (
-                data[lower]
-                + fraction * (data[upper] - data[lower])
-            )
+            return data[lower] + fraction * (data[upper] - data[lower])
 
         statistics = []
 
@@ -111,16 +103,11 @@ def get_portfolio_stats():
             statistics.append(
                 {
                     "metric": metric,
-                    "P10": round(percentile(data, 0.10), 4)
-                    if data else None,
-                    "P25": round(percentile(data, 0.25), 4)
-                    if data else None,
-                    "P50": round(percentile(data, 0.50), 4)
-                    if data else None,
-                    "P75": round(percentile(data, 0.75), 4)
-                    if data else None,
-                    "P90": round(percentile(data, 0.90), 4)
-                    if data else None,
+                    "P10": round(percentile(data, 0.10), 4) if data else None,
+                    "P25": round(percentile(data, 0.25), 4) if data else None,
+                    "P50": round(percentile(data, 0.50), 4) if data else None,
+                    "P75": round(percentile(data, 0.75), 4) if data else None,
+                    "P90": round(percentile(data, 0.90), 4) if data else None,
                 }
             )
 

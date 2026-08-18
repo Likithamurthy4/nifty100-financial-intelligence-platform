@@ -8,12 +8,13 @@ for SQLite.
 """
 
 from pathlib import Path
+
 import pandas as pd
 
 from etl.normaliser import (
+    clean_column_names,
     normalize_ticker,
     normalize_year,
-    clean_column_names,
 )
 
 # Folder containing datasets
@@ -28,7 +29,6 @@ DATASETS = {
     "analysis": ("analysis.xlsx", 1),
     "documents": ("documents.xlsx", 1),
     "prosandcons": ("prosandcons.xlsx", 1),
-
     # Supplementary datasets
     "sectors": ("sectors.xlsx", 0),
     "stock_prices": ("stock_prices.xlsx", 0),
@@ -84,7 +84,7 @@ def load_all_datasets():
 
             print(f"❌ {filename} not found")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
 
             print(f"❌ Error loading {filename}: {e}")
 
@@ -110,9 +110,10 @@ from etl.validator import (
     dq16_stock_date,
     save_validation_report,
 )
+
 if __name__ == "__main__":
 
-    all_data = load_all_datasets()      # <-- FIRST
+    all_data = load_all_datasets()  # <-- FIRST
 
     companies_df = all_data["companies"]  # <-- SECOND
 

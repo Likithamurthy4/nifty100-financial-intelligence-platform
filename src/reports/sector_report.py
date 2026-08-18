@@ -1,22 +1,20 @@
 import os
-import sqlite3
 import re
-import pandas as pd
+import sqlite3
 
+import pandas as pd
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    SimpleDocTemplate,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    PageBreak
 )
-
 
 # ============================================================
 # PATHS
@@ -26,21 +24,17 @@ DATABASE = "db/nifty100.db"
 
 OUTPUT_DIR = "reports/sector"
 
-os.makedirs(
-    OUTPUT_DIR,
-    exist_ok=True
-)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 # ============================================================
 # DATABASE
 # ============================================================
 
+
 def get_connection():
 
-    return sqlite3.connect(
-        DATABASE
-    )
+    return sqlite3.connect(DATABASE)
 
 
 def load_sector_data():
@@ -118,10 +112,7 @@ def load_sector_data():
         c.id
     """
 
-    df = pd.read_sql(
-        query,
-        conn
-    )
+    df = pd.read_sql(query, conn)
 
     conn.close()
 
@@ -132,6 +123,7 @@ def load_sector_data():
 # HELPERS
 # ============================================================
 
+
 def clean_number(value):
 
     if pd.isna(value):
@@ -141,7 +133,7 @@ def clean_number(value):
 
         return f"{float(value):,.2f}"
 
-    except:
+    except (TypeError, ValueError):
 
         return str(value)
 
@@ -155,17 +147,14 @@ def clean_integer(value):
 
         return f"{float(value):,.0f}"
 
-    except:
+    except (TypeError, ValueError):
 
         return str(value)
 
 
 def safe_median(series):
 
-    values = pd.to_numeric(
-        series,
-        errors="coerce"
-    ).dropna()
+    values = pd.to_numeric(series, errors="coerce").dropna()
 
     if values.empty:
         return "N/A"
@@ -177,11 +166,7 @@ def safe_filename(name):
 
     name = str(name)
 
-    name = re.sub(
-        r"[^A-Za-z0-9_-]+",
-        "_",
-        name
-    )
+    name = re.sub(r"[^A-Za-z0-9_-]+", "_", name)
 
     return name.strip("_")
 
@@ -198,7 +183,7 @@ title_style = ParagraphStyle(
     fontSize=20,
     leading=24,
     alignment=TA_CENTER,
-    textColor=colors.white
+    textColor=colors.white,
 )
 
 heading_style = ParagraphStyle(
@@ -207,22 +192,13 @@ heading_style = ParagraphStyle(
     fontSize=13,
     leading=16,
     spaceBefore=5,
-    spaceAfter=6
+    spaceAfter=6,
 )
 
-body_style = ParagraphStyle(
-    "Body",
-    parent=styles["BodyText"],
-    fontSize=8,
-    leading=10
-)
+body_style = ParagraphStyle("Body", parent=styles["BodyText"], fontSize=8, leading=10)
 
 table_style = ParagraphStyle(
-    "TableText",
-    parent=styles["BodyText"],
-    fontSize=6.5,
-    leading=8,
-    wordWrap="CJK"
+    "TableText", parent=styles["BodyText"], fontSize=6.5, leading=8, wordWrap="CJK"
 )
 
 
@@ -230,10 +206,8 @@ table_style = ParagraphStyle(
 # SECTOR HEADER
 # ============================================================
 
-def create_header(
-    sector,
-    company_count
-):
+
+def create_header(sector, company_count):
 
     data = [
         [
@@ -242,44 +216,21 @@ def create_header(
                 f"<font size=10>"
                 f"{company_count} Companies"
                 f"</font>",
-                title_style
+                title_style,
             )
         ]
     ]
 
-    table = Table(
-        data,
-        colWidths=[
-            267 * mm
-        ],
-        rowHeights=[
-            25 * mm
-        ]
-    )
+    table = Table(data, colWidths=[267 * mm], rowHeights=[25 * mm])
 
     table.setStyle(
-        TableStyle([
-            (
-                "BACKGROUND",
-                (0, 0),
-                (-1, -1),
-                colors.HexColor(
-                    "#172554"
-                )
-            ),
-            (
-                "VALIGN",
-                (0, 0),
-                (-1, -1),
-                "MIDDLE"
-            ),
-            (
-                "ALIGN",
-                (0, 0),
-                (-1, -1),
-                "CENTER"
-            )
-        ])
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#172554")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ]
+        )
     )
 
     return table
@@ -289,43 +240,18 @@ def create_header(
 # MEDIAN KPI SUMMARY
 # ============================================================
 
-def create_summary_table(
-    sector_df
-):
+
+def create_summary_table(sector_df):
 
     metrics = [
-        (
-            "Median ROE %",
-            "return_on_equity_pct"
-        ),
-        (
-            "Median D/E",
-            "debt_to_equity"
-        ),
-        (
-            "Median FCF",
-            "free_cash_flow_cr"
-        ),
-        (
-            "Median Revenue CAGR",
-            "revenue_cagr_5yr"
-        ),
-        (
-            "Median PAT CAGR",
-            "pat_cagr_5yr"
-        ),
-        (
-            "Median OPM %",
-            "operating_profit_margin_pct"
-        ),
-        (
-            "Median P/E",
-            "pe_ratio"
-        ),
-        (
-            "Median P/B",
-            "pb_ratio"
-        )
+        ("Median ROE %", "return_on_equity_pct"),
+        ("Median D/E", "debt_to_equity"),
+        ("Median FCF", "free_cash_flow_cr"),
+        ("Median Revenue CAGR", "revenue_cagr_5yr"),
+        ("Median PAT CAGR", "pat_cagr_5yr"),
+        ("Median OPM %", "operating_profit_margin_pct"),
+        ("Median P/E", "pe_ratio"),
+        ("Median P/B", "pb_ratio"),
     ]
 
     row1 = []
@@ -333,14 +259,10 @@ def create_summary_table(
 
     for title, column in metrics:
 
-        value = safe_median(
-            sector_df[column]
-        )
+        value = safe_median(sector_df[column])
 
         cell = Paragraph(
-            f"<b>{title}</b><br/>"
-            f"<font size=12>{value}</font>",
-            body_style
+            f"<b>{title}</b><br/>" f"<font size=12>{value}</font>", body_style
         )
 
         if len(row1) < 4:
@@ -348,53 +270,23 @@ def create_summary_table(
         else:
             row2.append(cell)
 
-    data = [
-        row1,
-        row2
-    ]
+    data = [row1, row2]
 
     table = Table(
         data,
-        colWidths=[
-            66 * mm,
-            66 * mm,
-            66 * mm,
-            66 * mm
-        ],
-        rowHeights=[
-            20 * mm,
-            20 * mm
-        ]
+        colWidths=[66 * mm, 66 * mm, 66 * mm, 66 * mm],
+        rowHeights=[20 * mm, 20 * mm],
     )
 
     table.setStyle(
-        TableStyle([
-            (
-                "GRID",
-                (0, 0),
-                (-1, -1),
-                0.5,
-                colors.grey
-            ),
-            (
-                "VALIGN",
-                (0, 0),
-                (-1, -1),
-                "MIDDLE"
-            ),
-            (
-                "LEFTPADDING",
-                (0, 0),
-                (-1, -1),
-                6
-            ),
-            (
-                "RIGHTPADDING",
-                (0, 0),
-                (-1, -1),
-                6
-            )
-        ])
+        TableStyle(
+            [
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
     )
 
     return table
@@ -404,22 +296,8 @@ def create_summary_table(
 # COMPANY TABLE
 # ============================================================
 
-def create_company_table(
-    sector_df
-):
 
-    columns = [
-        "company_id",
-        "company_name",
-        "return_on_equity_pct",
-        "debt_to_equity",
-        "free_cash_flow_cr",
-        "revenue_cagr_5yr",
-        "pat_cagr_5yr",
-        "operating_profit_margin_pct",
-        "pe_ratio",
-        "pb_ratio"
-    ]
+def create_company_table(sector_df):
 
     headers = [
         "Ticker",
@@ -431,108 +309,27 @@ def create_company_table(
         "PAT CAGR",
         "OPM %",
         "P/E",
-        "P/B"
+        "P/B",
     ]
 
-    data = [
-        [
-            Paragraph(
-                f"<b>{header}</b>",
-                table_style
-            )
-            for header in headers
-        ]
-    ]
+    data = [[Paragraph(f"<b>{header}</b>", table_style) for header in headers]]
 
     for _, row in sector_df.iterrows():
 
         data.append(
             [
+                Paragraph(str(row["company_id"]), table_style),
+                Paragraph(str(row["company_name"]), table_style),
+                Paragraph(clean_number(row["return_on_equity_pct"]), table_style),
+                Paragraph(clean_number(row["debt_to_equity"]), table_style),
+                Paragraph(clean_integer(row["free_cash_flow_cr"]), table_style),
+                Paragraph(clean_number(row["revenue_cagr_5yr"]), table_style),
+                Paragraph(clean_number(row["pat_cagr_5yr"]), table_style),
                 Paragraph(
-                    str(
-                        row["company_id"]
-                    ),
-                    table_style
+                    clean_number(row["operating_profit_margin_pct"]), table_style
                 ),
-
-                Paragraph(
-                    str(
-                        row["company_name"]
-                    ),
-                    table_style
-                ),
-
-                Paragraph(
-                    clean_number(
-                        row[
-                            "return_on_equity_pct"
-                        ]
-                    ),
-                    table_style
-                ),
-
-                Paragraph(
-                    clean_number(
-                        row[
-                            "debt_to_equity"
-                        ]
-                    ),
-                    table_style
-                ),
-
-                Paragraph(
-                    clean_integer(
-                        row[
-                            "free_cash_flow_cr"
-                        ]
-                    ),
-                    table_style
-                ),
-
-                Paragraph(
-                    clean_number(
-                        row[
-                            "revenue_cagr_5yr"
-                        ]
-                    ),
-                    table_style
-                ),
-
-                Paragraph(
-                    clean_number(
-                        row[
-                            "pat_cagr_5yr"
-                        ]
-                    ),
-                    table_style
-                ),
-
-                Paragraph(
-                    clean_number(
-                        row[
-                            "operating_profit_margin_pct"
-                        ]
-                    ),
-                    table_style
-                ),
-
-                Paragraph(
-                    clean_number(
-                        row[
-                            "pe_ratio"
-                        ]
-                    ),
-                    table_style
-                ),
-
-                Paragraph(
-                    clean_number(
-                        row[
-                            "pb_ratio"
-                        ]
-                    ),
-                    table_style
-                )
+                Paragraph(clean_number(row["pe_ratio"]), table_style),
+                Paragraph(clean_number(row["pb_ratio"]), table_style),
             ]
         )
 
@@ -548,74 +345,24 @@ def create_company_table(
             23 * mm,
             21 * mm,
             20 * mm,
-            20 * mm
+            20 * mm,
         ],
-        repeatRows=1
+        repeatRows=1,
     )
 
     table.setStyle(
-        TableStyle([
-            (
-                "BACKGROUND",
-                (0, 0),
-                (-1, 0),
-                colors.HexColor(
-                    "#dbeafe"
-                )
-            ),
-
-            (
-                "TEXTCOLOR",
-                (0, 0),
-                (-1, 0),
-                colors.HexColor(
-                    "#172554"
-                )
-            ),
-
-            (
-                "GRID",
-                (0, 0),
-                (-1, -1),
-                0.35,
-                colors.grey
-            ),
-
-            (
-                "VALIGN",
-                (0, 0),
-                (-1, -1),
-                "MIDDLE"
-            ),
-
-            (
-                "LEFTPADDING",
-                (0, 0),
-                (-1, -1),
-                3
-            ),
-
-            (
-                "RIGHTPADDING",
-                (0, 0),
-                (-1, -1),
-                3
-            ),
-
-            (
-                "TOPPADDING",
-                (0, 0),
-                (-1, -1),
-                4
-            ),
-
-            (
-                "BOTTOMPADDING",
-                (0, 0),
-                (-1, -1),
-                4
-            )
-        ])
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#dbeafe")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#172554")),
+                ("GRID", (0, 0), (-1, -1), 0.35, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 3),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]
+        )
     )
 
     return table
@@ -625,33 +372,21 @@ def create_company_table(
 # GENERATE ONE SECTOR REPORT
 # ============================================================
 
-def generate_sector_report(
-    sector,
-    sector_df
-):
 
-    filename = (
-        f"{safe_filename(sector)}"
-        f"_report.pdf"
-    )
+def generate_sector_report(sector, sector_df):
 
-    output_path = os.path.join(
-        OUTPUT_DIR,
-        filename
-    )
+    filename = f"{safe_filename(sector)}" f"_report.pdf"
+
+    output_path = os.path.join(OUTPUT_DIR, filename)
 
     doc = SimpleDocTemplate(
-
         output_path,
-
         pagesize=landscape(A4),
-
         rightMargin=10 * mm,
         leftMargin=10 * mm,
         topMargin=10 * mm,
         bottomMargin=10 * mm,
-
-        title=f"{sector} Sector Report"
+        title=f"{sector} Sector Report",
     )
 
     story = []
@@ -660,58 +395,29 @@ def generate_sector_report(
     # Header
     # --------------------------------------------------------
 
-    story.append(
-        create_header(
-            sector,
-            len(sector_df)
-        )
-    )
+    story.append(create_header(sector, len(sector_df)))
 
-    story.append(
-        Spacer(1, 7)
-    )
+    story.append(Spacer(1, 7))
 
     # --------------------------------------------------------
     # Summary
     # --------------------------------------------------------
 
-    story.append(
-        Paragraph(
-            "Sector Median KPIs",
-            heading_style
-        )
-    )
+    story.append(Paragraph("Sector Median KPIs", heading_style))
 
-    story.append(
-        create_summary_table(
-            sector_df
-        )
-    )
+    story.append(create_summary_table(sector_df))
 
-    story.append(
-        Spacer(1, 8)
-    )
+    story.append(Spacer(1, 8))
 
     # --------------------------------------------------------
     # Company list
     # --------------------------------------------------------
 
-    story.append(
-        Paragraph(
-            "Companies in Sector",
-            heading_style
-        )
-    )
+    story.append(Paragraph("Companies in Sector", heading_style))
 
-    story.append(
-        create_company_table(
-            sector_df
-        )
-    )
+    story.append(create_company_table(sector_df))
 
-    doc.build(
-        story
-    )
+    doc.build(story)
 
     return output_path
 
@@ -720,153 +426,82 @@ def generate_sector_report(
 # MAIN
 # ============================================================
 
+
 def main():
 
-    print(
-        "Loading sector data..."
-    )
+    print("Loading sector data...")
 
     df = load_sector_data()
 
-    print(
-        "Total companies:",
-        df["company_id"].nunique()
-    )
+    print("Total companies:", df["company_id"].nunique())
 
-    print(
-        "Sectors found:",
-        df["broad_sector"].nunique()
-    )
+    print("Sectors found:", df["broad_sector"].nunique())
 
-    print(
-        "\nSector distribution:"
-    )
+    print("\nSector distribution:")
 
-    print(
-        df["broad_sector"]
-        .value_counts()
-        .to_string()
-    )
+    print(df["broad_sector"].value_counts().to_string())
 
-    print(
-        "\n=== GENERATING SECTOR REPORTS ==="
-    )
+    print("\n=== GENERATING SECTOR REPORTS ===")
 
     generated = []
 
-    for sector in sorted(
-        df["broad_sector"]
-        .dropna()
-        .unique()
-    ):
+    for sector in sorted(df["broad_sector"].dropna().unique()):
 
-        sector_df = df[
-            df["broad_sector"] == sector
-        ].copy()
+        sector_df = df[df["broad_sector"] == sector].copy()
 
-        print(
-            f"\nGenerating: {sector}"
-        )
+        print(f"\nGenerating: {sector}")
 
-        print(
-            "Companies:",
-            len(sector_df)
-        )
+        print("Companies:", len(sector_df))
 
         try:
 
-            path = generate_sector_report(
-                sector,
-                sector_df
-            )
+            path = generate_sector_report(sector, sector_df)
 
-            size_kb = (
-                os.path.getsize(path)
-                / 1024
-            )
+            size_kb = os.path.getsize(path) / 1024
 
-            print(
-                f"Generated: {path}"
-            )
+            print(f"Generated: {path}")
 
-            print(
-                f"Size: {size_kb:.1f} KB"
-            )
+            print(f"Size: {size_kb:.1f} KB")
 
-            generated.append(
-                path
-            )
+            generated.append(path)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
 
-            print(
-                f"FAILED: {sector}"
-            )
+            print(f"FAILED: {sector}")
 
-            print(
-                str(e)
-            )
+            print(str(e))
 
     # --------------------------------------------------------
     # Final QA
     # --------------------------------------------------------
 
     pdf_files = [
-        file
-        for file in os.listdir(
-            OUTPUT_DIR
-        )
-        if file.lower().endswith(".pdf")
+        file for file in os.listdir(OUTPUT_DIR) if file.lower().endswith(".pdf")
     ]
 
-    print(
-        "\n========================================"
-    )
+    print("\n========================================")
 
-    print(
-        "SECTOR REPORT GENERATION COMPLETE"
-    )
+    print("SECTOR REPORT GENERATION COMPLETE")
 
-    print(
-        "========================================"
-    )
+    print("========================================")
 
     actual_sector_count = df["broad_sector"].nunique()
 
-    print(
-        "Sectors in database:",
-        actual_sector_count
-    )
+    print("Sectors in database:", actual_sector_count)
 
-    print(
-        "Generated PDFs:",
-        len(pdf_files)
-    )
+    print("Generated PDFs:", len(pdf_files))
 
-    print(
-        "Generated PDFs:",
-        len(pdf_files)
-    )
+    print("Generated PDFs:", len(pdf_files))
 
-    print(
-        "\nFiles:"
-    )
+    print("\nFiles:")
 
     for file in sorted(pdf_files):
 
-        path = os.path.join(
-            OUTPUT_DIR,
-            file
-        )
+        path = os.path.join(OUTPUT_DIR, file)
 
-        size_kb = (
-            os.path.getsize(path)
-            / 1024
-        )
+        size_kb = os.path.getsize(path) / 1024
 
-        print(
-            f"{file} — {size_kb:.1f} KB"
-        )
+        print(f"{file} — {size_kb:.1f} KB")
 
 
 if __name__ == "__main__":

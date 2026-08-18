@@ -1,7 +1,7 @@
-import sqlite3
-import pandas as pd
 import os
+import sqlite3
 
+import pandas as pd
 
 DATABASE = "db/nifty100.db"
 
@@ -47,7 +47,7 @@ def main():
         FROM cashflow
         ORDER BY company_id, year
         """,
-        conn
+        conn,
     )
 
     companies = pd.read_sql(
@@ -55,7 +55,7 @@ def main():
         SELECT id AS company_id
         FROM companies
         """,
-        conn
+        conn,
     )
 
     conn.close()
@@ -68,111 +68,53 @@ def main():
         cfi = row["investing_activity"]
         cff = row["financing_activity"]
 
-        pattern = classify_pattern(
-            cfo,
-            cfi,
-            cff
+        pattern = classify_pattern(cfo, cfi, cff)
+
+        records.append(
+            {
+                "company_id": row["company_id"],
+                "year": row["year"],
+                "cfo_sign": "+" if cfo > 0 else "-" if cfo < 0 else "0",
+                "cfi_sign": "+" if cfi > 0 else "-" if cfi < 0 else "0",
+                "cff_sign": "+" if cff > 0 else "-" if cff < 0 else "0",
+                "pattern_label": pattern,
+            }
         )
-
-        records.append({
-
-            "company_id":
-                row["company_id"],
-
-            "year":
-                row["year"],
-
-            "cfo_sign":
-                "+" if cfo > 0
-                else "-" if cfo < 0
-                else "0",
-
-            "cfi_sign":
-                "+" if cfi > 0
-                else "-" if cfi < 0
-                else "0",
-
-            "cff_sign":
-                "+" if cff > 0
-                else "-" if cff < 0
-                else "0",
-
-            "pattern_label":
-                pattern
-        })
 
     result = pd.DataFrame(records)
     # ---------------------------------------------------------
     # Add companies with no cash-flow data
     # ---------------------------------------------------------
 
-    existing_companies = set(
-        result["company_id"]
-    )
+    existing_companies = set(result["company_id"])
 
-    missing_companies = companies[
-        ~companies["company_id"].isin(
-            existing_companies
-        )
-    ]
+    missing_companies = companies[~companies["company_id"].isin(existing_companies)]
 
-    for company_id in missing_companies[
-        "company_id"
-    ]:
+    for company_id in missing_companies["company_id"]:
 
         result.loc[len(result)] = {
-
             "company_id": company_id,
-
             "year": 2024,
-
             "cfo_sign": "N/A",
-
             "cfi_sign": "N/A",
-
             "cff_sign": "N/A",
-
-            "pattern_label":
-                "Insufficient Data"
+            "pattern_label": "Insufficient Data",
         }
-    os.makedirs(
-        "output",
-        exist_ok=True
-    )
+    os.makedirs("output", exist_ok=True)
 
-    result.to_csv(
-        "output/capital_allocation.csv",
-        index=False
-    )
+    result.to_csv("output/capital_allocation.csv", index=False)
 
-    print(
-        "Capital allocation rows:",
-        len(result)
-    )
+    print("Capital allocation rows:", len(result))
 
-    print(
-        "Unique companies:",
-        result["company_id"].nunique()
-    )
+    print("Unique companies:", result["company_id"].nunique())
 
-    print(
-        "Years:",
-        result["year"].min(),
-        "to",
-        result["year"].max()
-    )
+    print("Years:", result["year"].min(), "to", result["year"].max())
 
     print("\nPattern distribution:")
 
-    print(
-        result["pattern_label"]
-        .value_counts()
-    )
+    print(result["pattern_label"].value_counts())
 
-    print(
-        "\nSaved:",
-        "output/capital_allocation.csv"
-    )
+    print("\nSaved:", "output/capital_allocation.csv")
 
     # ---------------------------------------------------------
     # Latest year distribution
@@ -180,38 +122,22 @@ def main():
 
     latest_year = result["year"].max()
 
-    latest = result[
-        result["year"] == latest_year
-    ]
+    latest = result[result["year"] == latest_year]
 
-    print(
-        f"\nLatest year ({latest_year}) distribution:"
-    )
+    print(f"\nLatest year ({latest_year}) distribution:")
 
-    print(
-        latest["pattern_label"]
-        .value_counts()
-    )
+    print(latest["pattern_label"].value_counts())
 
     # ---------------------------------------------------------
     # Coverage check
     # ---------------------------------------------------------
 
-    missing = companies[
-        ~companies["company_id"].isin(
-            result["company_id"]
-        )
-    ]
+    missing = companies[~companies["company_id"].isin(result["company_id"])]
 
-    print(
-        "\nCompanies missing capital allocation data:",
-        len(missing)
-    )
+    print("\nCompanies missing capital allocation data:", len(missing))
 
     if not missing.empty:
-        print(
-            missing.to_string(index=False)
-        )
+        print(missing.to_string(index=False))
 
 
 if __name__ == "__main__":
